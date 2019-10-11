@@ -21,10 +21,10 @@ public class Checker {
         for(ASTNode node : ast.root.getChildren()) {
 //            checkBP04(node); // works
 //            checkCH01(node); // works
-//            checkCH02(node); // works
+//            checkCH02(node); // does not work with variables
 //            checkCH03(node); // works
-//            checkCH04(node); // works
-//            checkCH05(node);
+//            checkCH04(node); // does not work with variables
+//            checkCH05(node); // does not work at all
 //            checkEU01(node); // works
         }
     }
@@ -72,6 +72,7 @@ public class Checker {
         }
     }
 
+    // TODO fix werkend met variabelen (lvl3 werkt niet)
     /**
      * Eis: "Controleer of de operanden van de operaties plus en min van gelijk type zijn en
      * dat vermenigvuldigen enkel met scalaire waarden gebeurd. Je mag geen pixels bij
@@ -86,6 +87,9 @@ public class Checker {
         if(toBeChecked.getChildren().size() != 1) {
             if(toBeChecked instanceof Operation) {
                 if(toBeChecked instanceof AddOperation || toBeChecked instanceof SubtractOperation) {
+                    // if(((Operation) toBeChecked).lhs instanceof VariableReference)
+                    //      get value, do checks
+                    // else
                     if(resolveExpressionType(((Operation) toBeChecked).lhs) != resolveExpressionType(((Operation) toBeChecked).rhs)) {
                         toBeChecked.setError("The operand types must be the same.");
                     }
@@ -118,6 +122,7 @@ public class Checker {
         }
     }
 
+    // TODO fix werkend met variablen (lvl 1 werkt niet)
     /**
      * Eis: "Controleer of bij declaraties het type van de waarde klopt bij de stijleigenschap.
      * Declaraties zoals width: #ff0000 of color: 12px zijn natuurlijk onzin."
@@ -129,7 +134,6 @@ public class Checker {
     private void checkCH04(ASTNode toBeChecked) {
         if(toBeChecked.getChildren().size() != 1) {
             if(toBeChecked instanceof Declaration) {
-                System.out.println(((Declaration) toBeChecked).property + " " + ((Declaration) toBeChecked).expression);
                 if(((Declaration) toBeChecked).property.name.equals("color") || ((Declaration) toBeChecked).property.name.equals("background-color")) {
                     if(resolveExpressionType(((Declaration) toBeChecked).expression) != ExpressionType.COLOR) {
                         toBeChecked.setError("Color attribute must have a color value.");
@@ -145,6 +149,7 @@ public class Checker {
         }
     }
 
+    // TODO just fix
     /**
      * Eis: "Controleer of de conditie bij een if-statement van het type boolean is
      * (zowel bij een variabele-referentie als een boolean literal)."
