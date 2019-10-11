@@ -48,7 +48,7 @@ variableReference: CAPITAL_IDENT;
 // Stylerule
 stylerule: selector OPEN_BRACE scope CLOSE_BRACE;
 scope: body+;
-body: declaration | ifClause;
+body: declaration | ifClause | variableAssignment;
 
 // Declaration
 declaration: propertyName COLON expression SEMICOLON;
