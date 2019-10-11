@@ -23,7 +23,7 @@ public class Checker {
 //            checkCH01(node); // works
 //            checkCH02(node); // does not work with variables
 //            checkCH03(node); // works
-//            checkCH04(node); // does not work with variables
+            checkCH04(node); // does not work with variables
 //            checkCH05(node); // does not work at all
 //            checkEU01(node); // works
         }
@@ -134,6 +134,13 @@ public class Checker {
     private void checkCH04(ASTNode toBeChecked) {
         if(toBeChecked.getChildren().size() != 1) {
             if(toBeChecked instanceof Declaration) {
+
+                if(((Declaration) toBeChecked).expression instanceof VariableReference) {
+                    System.out.println(((Declaration) toBeChecked).property.name + ": " + ((VariableReference) ((Declaration) toBeChecked).expression).name);
+                    System.out.println(((VariableReference) ((Declaration) toBeChecked).expression).name);
+                    
+                }
+
                 if(((Declaration) toBeChecked).property.name.equals("color") || ((Declaration) toBeChecked).property.name.equals("background-color")) {
                     if(resolveExpressionType(((Declaration) toBeChecked).expression) != ExpressionType.COLOR) {
                         toBeChecked.setError("Color attribute must have a color value.");
@@ -211,4 +218,6 @@ public class Checker {
             return null;
         }
     }
+
+
 }
