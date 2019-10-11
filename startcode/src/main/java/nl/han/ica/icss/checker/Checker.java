@@ -8,7 +8,7 @@ import nl.han.ica.icss.ast.literals.*;
 import nl.han.ica.icss.ast.operations.MultiplyOperation;
 import nl.han.ica.icss.ast.types.*;
 
-public class Checker { // TODO vragen of dit ook hoort te werken in de preview (daar alleen g4 toch?)
+public class Checker {
 
     private LinkedList<HashMap<String,ExpressionType>> variableTypes;
 
@@ -17,16 +17,39 @@ public class Checker { // TODO vragen of dit ook hoort te werken in de preview (
         variableTypes.add(new HashMap<>());
 
         for(ASTNode node : ast.root.getChildren()) {
+            checkBP04(node);
             checkCH01(node);
             checkCH02(node);
             checkCH03(node);
-//            checkCH04(node);
+            checkCH04(node);
 //            checkCH05(node);
+        }
+    }
+
+    // TODO optimaliseren: lijst maken van allowed attributes?
+    /**
+     * Eis: Alleen de stijlattributen color,background-color, width en height zijn toegestaan.
+     * Checks if the property name is allowed,
+     * else sets an error
+     * @param toBeChecked
+     */
+    private void checkBP04(ASTNode toBeChecked) {
+        if(toBeChecked.getChildren().size() != 1) {
+            if(toBeChecked instanceof PropertyName) {
+                if(!((PropertyName) toBeChecked).name.equals("color") && !((PropertyName) toBeChecked).name.equals("background-color") &&
+                   !((PropertyName) toBeChecked).name.equals("width") && !((PropertyName) toBeChecked).name.equals("height")) {
+                    toBeChecked.setError(((PropertyName) toBeChecked).name + " is not an allowed style attribute.");
+                }
+            }
+            toBeChecked.getChildren().forEach(this::checkBP04);
         }
     }
 
     /**
      * Eis: "Controleer of er geen variabelen worden gebruikt die niet gedefineerd zijn."
+     *
+     * Checks if a variable gets a value,
+     * else sets an error
      * @param toBeChecked
      */
     private void checkCH01(ASTNode toBeChecked) {
@@ -46,6 +69,10 @@ public class Checker { // TODO vragen of dit ook hoort te werken in de preview (
      * Eis: "Controleer of de operanden van de operaties plus en min van gelijk type zijn en
      * dat vermenigvuldigen enkel met scalaire waarden gebeurd. Je mag geen pixels bij
      * percentages optellen bijvoorbeeld."
+     *
+     * Checks if add and subtract operations are done by the same operands,
+     * checks if multiplying operations are done by scalaire operands,
+     * else sets an error
      * @param toBeChecked
      */
     private void checkCH02(ASTNode toBeChecked) {
@@ -55,7 +82,8 @@ public class Checker { // TODO vragen of dit ook hoort te werken in de preview (
                     toBeChecked.setError("The operand types must be the same.");
                 }
                 if(toBeChecked instanceof MultiplyOperation) {
-                    if(resolveExpressionType(((MultiplyOperation) toBeChecked).lhs) == ExpressionType.BOOL || resolveExpressionType(((MultiplyOperation) toBeChecked).lhs) == ExpressionType.COLOR) {
+                    if(resolveExpressionType(((MultiplyOperation) toBeChecked).lhs) == ExpressionType.BOOL ||
+                       resolveExpressionType(((MultiplyOperation) toBeChecked).lhs) == ExpressionType.COLOR) {
                         toBeChecked.setError("The multiply operand can only be used with scalaire values.");
                     }
                 }
@@ -66,6 +94,9 @@ public class Checker { // TODO vragen of dit ook hoort te werken in de preview (
 
     /**
      * Eis: "Controleer of er geen kleuren worden gebruikt in operaties (plus, min en keer)."
+     *
+     * Checks if colors are not used in operations,
+     * else sets an error
      * @param toBeChecked
      */
     private void checkCH03(ASTNode toBeChecked) {
@@ -82,10 +113,28 @@ public class Checker { // TODO vragen of dit ook hoort te werken in de preview (
     /**
      * Eis: "Controleer of bij declaraties het type van de waarde klopt bij de stijleigenschap.
      * Declaraties zoals width: #ff0000 of color: 12px zijn natuurlijk onzin."
+     *
+     * Checks if a property gets the right (allowed) value,
+     * else sets an error
      * @param toBeChecked
      */
     private void checkCH04(ASTNode toBeChecked) {
-
+        if(toBeChecked.getChildren().size() != 1) {
+            if(toBeChecked instanceof Declaration) {
+                System.out.println(((Declaration) toBeChecked).property + " " + ((Declaration) toBeChecked).expression);
+                if(((Declaration) toBeChecked).property.name.equals("color") || ((Declaration) toBeChecked).property.name.equals("background-color")) {
+                    if(resolveExpressionType(((Declaration) toBeChecked).expression) != ExpressionType.COLOR) {
+                        toBeChecked.setError("Color attribute must have a color value.");
+                    }
+                }
+                if(((Declaration) toBeChecked).property.name.equals("width") || ((Declaration) toBeChecked).property.name.equals("height")) {
+                    if(resolveExpressionType(((Declaration) toBeChecked).expression) != ExpressionType.PIXEL && resolveExpressionType(((Declaration) toBeChecked).expression) != ExpressionType.PERCENTAGE) {
+                        toBeChecked.setError("Size attribute must have a pixel or percentage value.");
+                    }
+                }
+            }
+            toBeChecked.getChildren().forEach(this::checkCH04);
+        }
     }
 
     /**
@@ -94,13 +143,27 @@ public class Checker { // TODO vragen of dit ook hoort te werken in de preview (
      * @param toBeChecked
      */
     private void checkCH05(ASTNode toBeChecked) {
+        if(toBeChecked.getChildren().size() != 1) {
+            if(toBeChecked instanceof IfClause) {
+                // if(resolveExpressionType(((IfClause) toBeChecked).getConditionalExpression()) != ExpressionType.BOOL)
+                if(!(((IfClause) toBeChecked).getConditionalExpression() instanceof BoolLiteral)) {
+                    toBeChecked.setError("If-statement requires a boolean expression.");
+                }
+                if(((IfClause) toBeChecked).getConditionalExpression() instanceof VariableReference) {
+                    // Verkrijg assignment, haal daar de expressie uit en check het
 
+                    System.out.println("It's a var ref");
+
+                }
+            }
+            toBeChecked.getChildren().forEach(this::checkCH05);
+        }
     }
 
     /**
      * Returns the ExpressionType (type of literal) of the given expression.
      * @param expression
-     * @return ExpressionType
+     * @return ExpressionType or null
      */
     private ExpressionType resolveExpressionType(Expression expression) {
         if(expression instanceof BoolLiteral) {
