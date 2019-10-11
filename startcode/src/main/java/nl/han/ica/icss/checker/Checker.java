@@ -5,7 +5,9 @@ import java.util.LinkedList;
 
 import nl.han.ica.icss.ast.*;
 import nl.han.ica.icss.ast.literals.*;
+import nl.han.ica.icss.ast.operations.AddOperation;
 import nl.han.ica.icss.ast.operations.MultiplyOperation;
+import nl.han.ica.icss.ast.operations.SubtractOperation;
 import nl.han.ica.icss.ast.types.*;
 
 public class Checker {
@@ -17,12 +19,13 @@ public class Checker {
         variableTypes.add(new HashMap<>());
 
         for(ASTNode node : ast.root.getChildren()) {
-            checkBP04(node);
-            checkCH01(node);
-            checkCH02(node);
-            checkCH03(node);
-            checkCH04(node);
+//            checkBP04(node); // works
+//            checkCH01(node); // works
+//            checkCH02(node); // works
+//            checkCH03(node); // works
+//            checkCH04(node); // works
 //            checkCH05(node);
+//            checkEU01(node); // works
         }
     }
 
@@ -60,6 +63,10 @@ public class Checker {
                 if(((Declaration) toBeChecked).expression instanceof VariableReference && !variableTypes.getFirst().containsKey(((VariableReference) ((Declaration)toBeChecked).expression).name)) {
                     toBeChecked.setError("Unknown variable " + ((VariableReference) ((Declaration) toBeChecked).expression).name + " not defined.");
                 }
+            } else if(toBeChecked instanceof IfClause) {
+                if(((IfClause) toBeChecked).conditionalExpression instanceof VariableReference && !variableTypes.getFirst().containsKey(((VariableReference) ((IfClause) toBeChecked).conditionalExpression).name)) {
+                    toBeChecked.setError("Unknown variable " + ((VariableReference) ((IfClause) toBeChecked).conditionalExpression).name + " not defined.");
+                }
             }
             toBeChecked.getChildren().forEach(this::checkCH01);
         }
@@ -78,13 +85,14 @@ public class Checker {
     private void checkCH02(ASTNode toBeChecked) {
         if(toBeChecked.getChildren().size() != 1) {
             if(toBeChecked instanceof Operation) {
-                if(resolveExpressionType(((Operation) toBeChecked).lhs) != resolveExpressionType(((Operation) toBeChecked).rhs)) {
-                    toBeChecked.setError("The operand types must be the same.");
-                }
-                if(toBeChecked instanceof MultiplyOperation) {
-                    if(resolveExpressionType(((MultiplyOperation) toBeChecked).lhs) == ExpressionType.BOOL ||
-                       resolveExpressionType(((MultiplyOperation) toBeChecked).lhs) == ExpressionType.COLOR) {
-                        toBeChecked.setError("The multiply operand can only be used with scalaire values.");
+                if(toBeChecked instanceof AddOperation || toBeChecked instanceof SubtractOperation) {
+                    if(resolveExpressionType(((Operation) toBeChecked).lhs) != resolveExpressionType(((Operation) toBeChecked).rhs)) {
+                        toBeChecked.setError("The operand types must be the same.");
+                    }
+                } else if(toBeChecked instanceof MultiplyOperation) {
+                    if((resolveExpressionType(((MultiplyOperation) toBeChecked).lhs) != ExpressionType.SCALAR && resolveExpressionType(((MultiplyOperation) toBeChecked).rhs) != ExpressionType.SCALAR) ||
+                       (resolveExpressionType(((MultiplyOperation) toBeChecked).lhs) == ExpressionType.SCALAR && resolveExpressionType(((MultiplyOperation) toBeChecked).rhs) == ExpressionType.SCALAR)) {
+                        toBeChecked.setError("The multiply operation needs one scalar type.");
                     }
                 }
             }
@@ -157,6 +165,24 @@ public class Checker {
                 }
             }
             toBeChecked.getChildren().forEach(this::checkCH05);
+        }
+    }
+
+    /**
+     * Eigen eis: "Controleer of er geen booleans worden gebruikt in operaties (plus, min en keer)"
+     * Lijkt op CH03
+     * Checks if booleans are not used in operations,
+     * else sets an error
+     * @param toBeChecked
+     */
+    private void checkEU01(ASTNode toBeChecked) {
+        if(toBeChecked.getChildren().size() != 1) {
+            if(toBeChecked instanceof Operation) {
+                if(((Operation) toBeChecked).lhs instanceof BoolLiteral || ((Operation) toBeChecked).rhs instanceof BoolLiteral) {
+                    toBeChecked.setError("Operations cannot be performed with booleans.");
+                }
+            }
+            toBeChecked.getChildren().forEach(this::checkEU01);
         }
     }
 
