@@ -38,23 +38,40 @@ MIN: '-';
 MUL: '*';
 ASSIGNMENT_OPERATOR: ':=';
 
-//--- PARSER: ---
+//--- PARSER: --- // TODO camelCase
 
-stylesheet: stylerule+;
-stylerule: selector OPEN_BRACE declarations+ CLOSE_BRACE;
-declarations: declaration COLON literal SEMICOLON;
-declaration: LOWER_IDENT;
+// Stylesheet
+stylesheet: variableassignment+ stylerule+ EOF;
+
+// Variables
+variableassignment: variablereference ASSIGNMENT_OPERATOR expression SEMICOLON;
+variablereference: CAPITAL_IDENT;
+
+// Stylerule
+stylerule: selector OPEN_BRACE scope CLOSE_BRACE;
+scope: body+;
+body: declaration | ifclause;
+
+// Declaration
+declaration: propertyname COLON expression SEMICOLON;
+propertyname: LOWER_IDENT;
+
+// Expression
+expression: expression MUL expression | expression PLUS expression | expression MIN expression | variablereference | literal;
+
+// If clause
+ifclause: IF BOX_BRACKET_OPEN expression BOX_BRACKET_CLOSE OPEN_BRACE scope CLOSE_BRACE;
 
 // Selectors
-selector: idSelector | classSelector | tagSelector;
+selector: tagSelector | classSelector | idSelector;
 tagSelector: LOWER_IDENT;
 classSelector: CLASS_IDENT;
 idSelector: ID_IDENT;
 
 // Literals
-literal: booleLileral | pixelLiteral | percentageLiteral | colorLiteral | scalarLiteral;
-booleLileral: TRUE | FALSE;
-pixelLiteral: PIXELSIZE;
-percentageLiteral: PERCENTAGE;
+literal: boolLiteral | pixelLiteral | percentageLiteral | colorLiteral | scalarLiteral;
+boolLiteral: TRUE | FALSE;
 colorLiteral: COLOR;
+percentageLiteral: PERCENTAGE;
+pixelLiteral: PIXELSIZE;
 scalarLiteral: SCALAR;
