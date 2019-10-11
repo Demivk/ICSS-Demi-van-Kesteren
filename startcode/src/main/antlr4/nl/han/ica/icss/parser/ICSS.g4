@@ -41,26 +41,26 @@ ASSIGNMENT_OPERATOR: ':=';
 //--- PARSER: --- // TODO camelCase
 
 // Stylesheet
-stylesheet: variableassignment+ stylerule+ EOF;
+stylesheet: variableAssignment+ stylerule+ EOF;
 
 // Variables
-variableassignment: variablereference ASSIGNMENT_OPERATOR expression SEMICOLON;
-variablereference: CAPITAL_IDENT;
+variableAssignment: variableReference ASSIGNMENT_OPERATOR expression SEMICOLON;
+variableReference: CAPITAL_IDENT;
 
 // Stylerule
 stylerule: selector OPEN_BRACE scope CLOSE_BRACE;
 scope: body+;
-body: declaration | ifclause;
+body: declaration | ifClause;
 
 // Declaration
-declaration: propertyname COLON expression SEMICOLON;
-propertyname: LOWER_IDENT;
+declaration: propertyName COLON expression SEMICOLON;
+propertyName: LOWER_IDENT;
 
 // Expression
-expression: expression MUL expression | expression PLUS expression | expression MIN expression | variablereference | literal;
+expression: expression MUL expression | expression PLUS expression | expression MIN expression | variableReference | literal;
 
 // If clause
-ifclause: IF BOX_BRACKET_OPEN expression BOX_BRACKET_CLOSE OPEN_BRACE scope CLOSE_BRACE;
+ifClause: IF BOX_BRACKET_OPEN expression BOX_BRACKET_CLOSE OPEN_BRACE scope CLOSE_BRACE;
 
 // Selectors
 selector: tagSelector | classSelector | idSelector;
