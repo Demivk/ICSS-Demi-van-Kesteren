@@ -6,7 +6,6 @@ IF: 'if';
 BOX_BRACKET_OPEN: '[';
 BOX_BRACKET_CLOSE: ']';
 
-
 //Literals
 TRUE: 'TRUE';
 FALSE: 'FALSE';
@@ -28,7 +27,7 @@ CAPITAL_IDENT: [A-Z] [A-Za-z0-9_]*;
 //All whitespace is skipped
 WS: [ \t\r\n]+ -> skip;
 
-//
+//Symbols
 OPEN_BRACE: '{';
 CLOSE_BRACE: '}';
 SEMICOLON: ';';
@@ -38,10 +37,9 @@ MIN: '-';
 MUL: '*';
 ASSIGNMENT_OPERATOR: ':=';
 
-//--- PARSER: --- // TODO camelCase
-
+//--- PARSER: ---
 // Stylesheet
-stylesheet: variableAssignment+ stylerule+ EOF;
+stylesheet: variableAssignment* stylerule* EOF;
 
 // Variables
 variableAssignment: variableReference ASSIGNMENT_OPERATOR expression SEMICOLON;
@@ -57,7 +55,11 @@ declaration: propertyName COLON expression SEMICOLON;
 propertyName: LOWER_IDENT;
 
 // Expression
-expression: expression MUL expression | expression PLUS expression | expression MIN expression | variableReference | literal;
+expression: expression MUL expression #multiplyOperation |
+            expression PLUS expression #addOperation |
+            expression MIN expression #subtractOperation |
+            variableReference #varRef |
+            literal #lit;
 
 // If clause
 ifClause: IF BOX_BRACKET_OPEN expression BOX_BRACKET_CLOSE OPEN_BRACE scope CLOSE_BRACE;
