@@ -19,24 +19,25 @@ public class Checker {
         variableTypes.add(new HashMap<>());
 
         for(ASTNode node : ast.root.getChildren()) {
-//            checkBP04(node); // works
-//            checkCH01(node); // works
-//            checkCH02(node); // does not work with variables
-//            checkCH03(node); // works
-            checkCH04(node); // does not work with variables
-//            checkCH05(node); // does not work at all
-//            checkEU01(node); // works
+//            checkAllowedStyleAttributes(node); // works
+//            checkUndefinedVariables(node); // works
+//            checkOperationsAreAllowed(node); // does not work with variables
+//            checkNoColorsInOperation(node); // works
+//            checkDeclarationValuesValid(node); // does not work with operations with variables
+//            checkIfConditionIsBoolean(node); // works
+//            checkNoBooleansInOperation(node); // works
         }
     }
 
     // TODO optimaliseren: lijst maken van allowed attributes?
     /**
+     * BP04
      * Eis: Alleen de stijlattributen color,background-color, width en height zijn toegestaan.
      * Checks if the property name is allowed,
      * else sets an error
      * @param toBeChecked
      */
-    private void checkBP04(ASTNode toBeChecked) {
+    private void checkAllowedStyleAttributes(ASTNode toBeChecked) {
         if(toBeChecked.getChildren().size() != 1) {
             if(toBeChecked instanceof PropertyName) {
                 if(!((PropertyName) toBeChecked).name.equals("color") && !((PropertyName) toBeChecked).name.equals("background-color") &&
@@ -44,18 +45,19 @@ public class Checker {
                     toBeChecked.setError(((PropertyName) toBeChecked).name + " is not an allowed style attribute.");
                 }
             }
-            toBeChecked.getChildren().forEach(this::checkBP04);
+            toBeChecked.getChildren().forEach(this::checkAllowedStyleAttributes);
         }
     }
 
     /**
+     * CH01
      * Eis: "Controleer of er geen variabelen worden gebruikt die niet gedefineerd zijn."
      *
      * Checks if a variable gets a value,
      * else sets an error
      * @param toBeChecked
      */
-    private void checkCH01(ASTNode toBeChecked) {
+    private void checkUndefinedVariables(ASTNode toBeChecked) {
         if(toBeChecked.getChildren().size() != 1) {
             if(toBeChecked instanceof VariableAssignment) {
                  variableTypes.getFirst().put(((VariableAssignment)toBeChecked).name.name, resolveExpressionType(((VariableAssignment) toBeChecked).expression));
@@ -68,12 +70,30 @@ public class Checker {
                     toBeChecked.setError("Unknown variable " + ((VariableReference) ((IfClause) toBeChecked).conditionalExpression).name + " not defined.");
                 }
             }
-            toBeChecked.getChildren().forEach(this::checkCH01);
+            toBeChecked.getChildren().forEach(this::checkUndefinedVariables);
         }
+
+//        if(toBeChecked.getChildren().size() != 1) {
+//            if(toBeChecked instanceof VariableReference) {
+//                String name = ((VariableReference) toBeChecked).name;
+//                boolean exists = false;
+//                for(HashMap<String, ExpressionType> h : variableTypes) {
+//                    if (h.containsKey(name)) {
+//                        exists = true;
+//                        break;
+//                    }
+//                }
+//                if(!exists) {
+//                    toBeChecked.setError("Variable " + ((VariableReference) toBeChecked).name + " not defined");
+//                }
+//            }
+//            toBeChecked.getChildren().forEach(this::checkUndefinedVariables);
+//        }
     }
 
-    // TODO fix werkend met variabelen (lvl3 werkt niet)
+    // TODO fix werkend met variabelen (lvl3 werkt niet (lvl1 zou dan ook niet horen te werken))
     /**
+     * CH02
      * Eis: "Controleer of de operanden van de operaties plus en min van gelijk type zijn en
      * dat vermenigvuldigen enkel met scalaire waarden gebeurd. Je mag geen pixels bij
      * percentages optellen bijvoorbeeld."
@@ -83,8 +103,13 @@ public class Checker {
      * else sets an error
      * @param toBeChecked
      */
-    private void checkCH02(ASTNode toBeChecked) {
+    private void checkOperationsAreAllowed(ASTNode toBeChecked) {
         if(toBeChecked.getChildren().size() != 1) {
+
+//            if(toBeChecked instanceof VariableAssignment) {
+//                variableTypes.getFirst().put(((VariableAssignment) toBeChecked).name.name, resolveExpressionType(((VariableAssignment) toBeChecked).expression));
+//            }
+
             if(toBeChecked instanceof Operation) {
                 if(toBeChecked instanceof AddOperation || toBeChecked instanceof SubtractOperation) {
                     // if(((Operation) toBeChecked).lhs instanceof VariableReference)
@@ -100,30 +125,32 @@ public class Checker {
                     }
                 }
             }
-            toBeChecked.getChildren().forEach(this::checkCH02);
+            toBeChecked.getChildren().forEach(this::checkOperationsAreAllowed);
         }
     }
 
     /**
+     * CH03
      * Eis: "Controleer of er geen kleuren worden gebruikt in operaties (plus, min en keer)."
      *
      * Checks if colors are not used in operations,
      * else sets an error
      * @param toBeChecked
      */
-    private void checkCH03(ASTNode toBeChecked) {
+    private void checkNoColorsInOperation(ASTNode toBeChecked) {
         if(toBeChecked.getChildren().size() != 1) {
             if(toBeChecked instanceof Operation) {
                 if(((Operation) toBeChecked).lhs instanceof ColorLiteral || ((Operation) toBeChecked).rhs instanceof ColorLiteral) {
                     toBeChecked.setError("Operations cannot be performed with colors.");
                 }
             }
-            toBeChecked.getChildren().forEach(this::checkCH03);
+            toBeChecked.getChildren().forEach(this::checkNoColorsInOperation);
         }
     }
 
-    // TODO fix werkend met variablen (lvl 1 werkt niet)
+    // TODO fix werkend met variablen (lvl 2 werkt niet met optellen) + optimaliseren
     /**
+     * CH04
      * Eis: "Controleer of bij declaraties het type van de waarde klopt bij de stijleigenschap.
      * Declaraties zoals width: #ff0000 of color: 12px zijn natuurlijk onzin."
      *
@@ -131,70 +158,87 @@ public class Checker {
      * else sets an error
      * @param toBeChecked
      */
-    private void checkCH04(ASTNode toBeChecked) {
+    private void checkDeclarationValuesValid(ASTNode toBeChecked) {
         if(toBeChecked.getChildren().size() != 1) {
+            if(toBeChecked instanceof VariableAssignment) {
+                String name = ((VariableAssignment)toBeChecked).name.name;
+                ExpressionType expressionType = resolveExpressionType(((VariableAssignment) toBeChecked).expression);
+                variableTypes.getFirst().put(name, expressionType);
+            }
+
             if(toBeChecked instanceof Declaration) {
-
-                if(((Declaration) toBeChecked).expression instanceof VariableReference) {
-                    System.out.println(((Declaration) toBeChecked).property.name + ": " + ((VariableReference) ((Declaration) toBeChecked).expression).name);
-                    System.out.println(((VariableReference) ((Declaration) toBeChecked).expression).name);
-                    
-                }
-
                 if(((Declaration) toBeChecked).property.name.equals("color") || ((Declaration) toBeChecked).property.name.equals("background-color")) {
-                    if(resolveExpressionType(((Declaration) toBeChecked).expression) != ExpressionType.COLOR) {
+                    if(((Declaration) toBeChecked).expression instanceof VariableReference) {
+                        if(variableTypes.getFirst().containsKey(((VariableReference) ((Declaration) toBeChecked).expression).name)) {
+                            if(variableTypes.getFirst().get(((VariableReference) ((Declaration) toBeChecked).expression).name) != ExpressionType.COLOR) {
+                                toBeChecked.setError("Variable at color attribute must have a color value.");
+                            }
+                        }
+                    } else if(resolveExpressionType(((Declaration) toBeChecked).expression) != ExpressionType.COLOR) {
                         toBeChecked.setError("Color attribute must have a color value.");
                     }
                 }
                 if(((Declaration) toBeChecked).property.name.equals("width") || ((Declaration) toBeChecked).property.name.equals("height")) {
-                    if(resolveExpressionType(((Declaration) toBeChecked).expression) != ExpressionType.PIXEL && resolveExpressionType(((Declaration) toBeChecked).expression) != ExpressionType.PERCENTAGE) {
+                    if(((Declaration) toBeChecked).expression instanceof VariableReference) {
+                        if(variableTypes.getFirst().containsKey(((VariableReference) ((Declaration) toBeChecked).expression).name)) {
+                            if(variableTypes.getFirst().get(((VariableReference) ((Declaration) toBeChecked).expression).name) != ExpressionType.PIXEL && variableTypes.getFirst().get(((VariableReference) ((Declaration) toBeChecked).expression).name) != ExpressionType.PERCENTAGE) {
+                                toBeChecked.setError("Variable at size attribute must have a pixel or percentage value.");
+                            }
+                        }
+                    } else if(resolveExpressionType(((Declaration) toBeChecked).expression) != ExpressionType.PIXEL && resolveExpressionType(((Declaration) toBeChecked).expression) != ExpressionType.PERCENTAGE) {
                         toBeChecked.setError("Size attribute must have a pixel or percentage value.");
                     }
                 }
             }
-            toBeChecked.getChildren().forEach(this::checkCH04);
+            toBeChecked.getChildren().forEach(this::checkDeclarationValuesValid);
         }
     }
 
-    // TODO just fix
     /**
+     * CH05
      * Eis: "Controleer of de conditie bij een if-statement van het type boolean is
      * (zowel bij een variabele-referentie als een boolean literal)."
      * @param toBeChecked
      */
-    private void checkCH05(ASTNode toBeChecked) {
-        if(toBeChecked.getChildren().size() != 1) {
-            if(toBeChecked instanceof IfClause) {
-                // if(resolveExpressionType(((IfClause) toBeChecked).getConditionalExpression()) != ExpressionType.BOOL)
-                if(!(((IfClause) toBeChecked).getConditionalExpression() instanceof BoolLiteral)) {
+    private void checkIfConditionIsBoolean(ASTNode toBeChecked) {
+        if (toBeChecked.getChildren().size() != 1) {
+            if (toBeChecked instanceof VariableAssignment) {
+                String name = ((VariableAssignment) toBeChecked).name.name;
+                ExpressionType expressionType = resolveExpressionType(((VariableAssignment) toBeChecked).expression);
+                variableTypes.getFirst().put(name, expressionType);
+            }
+
+            if (toBeChecked instanceof IfClause) {
+                if (((IfClause) toBeChecked).getConditionalExpression() instanceof VariableReference) {
+                    if (variableTypes.getFirst().containsKey(((VariableReference) ((IfClause) toBeChecked).getConditionalExpression()).name)) {
+                        if (variableTypes.getFirst().get(((VariableReference) ((IfClause) toBeChecked).getConditionalExpression()).name) != ExpressionType.BOOL) {
+                            toBeChecked.setError("If-statement requires a variable with a boolean expression");
+                        }
+                    }
+                } else if (!(((IfClause) toBeChecked).getConditionalExpression() instanceof BoolLiteral)) {
                     toBeChecked.setError("If-statement requires a boolean expression.");
                 }
-                if(((IfClause) toBeChecked).getConditionalExpression() instanceof VariableReference) {
-                    // Verkrijg assignment, haal daar de expressie uit en check het
-
-                    System.out.println("It's a var ref");
-
-                }
             }
-            toBeChecked.getChildren().forEach(this::checkCH05);
+            toBeChecked.getChildren().forEach(this::checkIfConditionIsBoolean);
         }
     }
 
     /**
+     * EU01
      * Eigen eis: "Controleer of er geen booleans worden gebruikt in operaties (plus, min en keer)"
      * Lijkt op CH03
      * Checks if booleans are not used in operations,
      * else sets an error
      * @param toBeChecked
      */
-    private void checkEU01(ASTNode toBeChecked) {
+    private void checkNoBooleansInOperation(ASTNode toBeChecked) {
         if(toBeChecked.getChildren().size() != 1) {
             if(toBeChecked instanceof Operation) {
                 if(((Operation) toBeChecked).lhs instanceof BoolLiteral || ((Operation) toBeChecked).rhs instanceof BoolLiteral) {
                     toBeChecked.setError("Operations cannot be performed with booleans.");
                 }
             }
-            toBeChecked.getChildren().forEach(this::checkEU01);
+            toBeChecked.getChildren().forEach(this::checkNoBooleansInOperation);
         }
     }
 
