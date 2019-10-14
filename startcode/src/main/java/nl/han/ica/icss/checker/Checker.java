@@ -21,7 +21,7 @@ public class Checker {
         for(ASTNode node : ast.root.getChildren()) {
 //            checkAllowedStyleAttributes(node); // works
 //            checkUndefinedVariables(node); // works
-//            checkOperationsAreAllowed(node); // does not work with variables
+//            checkOperationsAreAllowed(node); // does not work with variables (*) and multiple operands
 //            checkNoColorsInOperation(node); // works
 //            checkDeclarationValuesValid(node); // does not work with operations with variables
 //            checkIfConditionIsBoolean(node); // works
@@ -91,7 +91,7 @@ public class Checker {
 //        }
     }
 
-    // TODO fix werkend met variabelen (lvl3 werkt niet (lvl1 zou dan ook niet horen te werken))
+    // TODO fix werkend met variabelen (lvl2 werkt niet met verschillende operands)
     /**
      * CH02
      * Eis: "Controleer of de operanden van de operaties plus en min van gelijk type zijn en
@@ -105,20 +105,39 @@ public class Checker {
      */
     private void checkOperationsAreAllowed(ASTNode toBeChecked) {
         if(toBeChecked.getChildren().size() != 1) {
-
-//            if(toBeChecked instanceof VariableAssignment) {
-//                variableTypes.getFirst().put(((VariableAssignment) toBeChecked).name.name, resolveExpressionType(((VariableAssignment) toBeChecked).expression));
-//            }
+            if(toBeChecked instanceof VariableAssignment) {
+                String name = ((VariableAssignment)toBeChecked).name.name;
+                ExpressionType expressionType = resolveExpressionType(((VariableAssignment) toBeChecked).expression);
+                variableTypes.getFirst().put(name, expressionType);
+            }
 
             if(toBeChecked instanceof Operation) {
                 if(toBeChecked instanceof AddOperation || toBeChecked instanceof SubtractOperation) {
-                    // if(((Operation) toBeChecked).lhs instanceof VariableReference)
-                    //      get value, do checks
-                    // else
-                    if(resolveExpressionType(((Operation) toBeChecked).lhs) != resolveExpressionType(((Operation) toBeChecked).rhs)) {
+                    if(((Operation) toBeChecked).lhs instanceof VariableReference) {
+                        if(variableTypes.getFirst().containsKey(((VariableReference) ((Operation) toBeChecked).lhs).name)) {
+                            if(variableTypes.getFirst().get(((VariableReference) ((Operation) toBeChecked).lhs).name) != resolveExpressionType(((Operation) toBeChecked).rhs)) {
+                                toBeChecked.setError("The operand types must be the same.");
+                            }
+                        }
+                    } else if(((Operation) toBeChecked).rhs instanceof VariableReference) {
+                        if(variableTypes.getFirst().containsKey(((VariableReference) ((Operation) toBeChecked).rhs).name)) {
+                            if(variableTypes.getFirst().get(((VariableReference) ((Operation) toBeChecked).rhs).name) != resolveExpressionType(((Operation) toBeChecked).lhs)) {
+                                toBeChecked.setError("The operand types must be the same.");
+                            }
+                        }
+                    } else if(((Operation) toBeChecked).lhs instanceof VariableReference && ((Operation) toBeChecked).rhs instanceof VariableReference) {
+                        if(variableTypes.getFirst().containsKey(((VariableReference) ((Operation) toBeChecked).lhs).name) && variableTypes.getFirst().containsKey(((VariableReference) ((Operation) toBeChecked).rhs).name)) {
+                            if(variableTypes.getFirst().get(((VariableReference) ((Operation) toBeChecked).lhs).name) != variableTypes.getFirst().get(((VariableReference) ((Operation) toBeChecked).rhs).name)) {
+                                toBeChecked.setError("The operand types must be the same.");
+                            }
+                        }
+                    } else if(resolveExpressionType(((Operation) toBeChecked).lhs) != resolveExpressionType(((Operation) toBeChecked).rhs)) {
                         toBeChecked.setError("The operand types must be the same.");
                     }
                 } else if(toBeChecked instanceof MultiplyOperation) {
+                    // if varref
+                    // else
+
                     if((resolveExpressionType(((MultiplyOperation) toBeChecked).lhs) != ExpressionType.SCALAR && resolveExpressionType(((MultiplyOperation) toBeChecked).rhs) != ExpressionType.SCALAR) ||
                        (resolveExpressionType(((MultiplyOperation) toBeChecked).lhs) == ExpressionType.SCALAR && resolveExpressionType(((MultiplyOperation) toBeChecked).rhs) == ExpressionType.SCALAR)) {
                         toBeChecked.setError("The multiply operation needs one scalar type.");
