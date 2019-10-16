@@ -19,15 +19,15 @@ public class Checker {
         variableTypes.add(new HashMap<>());
         // TODO findAllVariables hier ipv in methoden?
 
-//        for(ASTNode node : ast.root.getChildren()) {
-//            checkAllowedStyleAttributes(node); // works
-//            checkUndefinedVariables(node); // works
-//            checkOperationsAreAllowed(node); // does not work with variables (*) and multiple operands
-//            checkNoColorsInOperation(node); // works
-//            checkDeclarationValuesValid(node); // does not work with operations with variables
-//            checkIfConditionIsBoolean(node); // works
-//            checkNoBooleansInOperation(node); // works
-//        }
+        for(ASTNode node : ast.root.getChildren()) {
+            checkAllowedStyleAttributes(node);  // works
+            checkUndefinedVariables(node);      // works
+//            checkOperationsAreAllowed(node);    // does not work with variables (*) and multiple operands
+            checkNoColorsInOperation(node);     // works
+//            checkDeclarationValuesValid(node);  // does not work with operations with variables (maybe CH02 will fix this?)
+            checkIfConditionIsBoolean(node);    // works
+            checkNoBooleansInOperation(node);   // works
+        }
     }
 
     // TODO optimaliseren: lijst maken van allowed attributes?
