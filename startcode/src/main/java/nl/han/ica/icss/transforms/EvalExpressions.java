@@ -62,6 +62,13 @@ public class EvalExpressions implements Transform {
         node.getChildren().forEach(this::evaluateExpression);
     }
 
+    /**
+     * Executes an operation based on the operation type
+     * @param operation operation type
+     * @param exLeft first expression
+     * @param exRight second expression
+     * @return result of an operation
+     */
     private Literal calculateOperation(Operation operation, Expression exLeft, Expression exRight) {
         if(operation instanceof MultiplyOperation) {
             return calculateMultiplyOperation(exLeft, exRight);
@@ -73,6 +80,12 @@ public class EvalExpressions implements Transform {
         return null;
     }
 
+    /**
+     * Executes a multiply operation
+     * @param exLeft first expression
+     * @param exRight second expression
+     * @return result of exLeft * exRight
+     */
     private Literal calculateMultiplyOperation(Expression exLeft, Expression exRight) {
         if(exLeft instanceof ScalarLiteral) {
             if(exRight instanceof PercentageLiteral) {
@@ -97,6 +110,12 @@ public class EvalExpressions implements Transform {
         return null;
     }
 
+    /**
+     * Executes an add operation
+     * @param exLeft first expression
+     * @param exRight second expression
+     * @return result of exLeft + exRight
+     */
     private Literal calculateAddOperation(Expression exLeft, Expression exRight) {
         if(exLeft instanceof PercentageLiteral) {
             int result = ((PercentageLiteral) exLeft).value + ((PercentageLiteral) exRight).value;
@@ -110,6 +129,12 @@ public class EvalExpressions implements Transform {
         return null;
     }
 
+    /**
+     * Executes a subtract operation
+     * @param exLeft first expression
+     * @param exRight second expression
+     * @return result of exLeft - exRight
+     */
     private Literal calculateSubtractOperation(Expression exLeft, Expression exRight) {
         if(exLeft instanceof PercentageLiteral) {
             int result = ((PercentageLiteral) exLeft).value - ((PercentageLiteral) exRight).value;
