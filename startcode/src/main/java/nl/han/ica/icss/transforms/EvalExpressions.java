@@ -8,7 +8,6 @@ import nl.han.ica.icss.ast.operations.SubtractOperation;
 
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.List;
 
 public class EvalExpressions implements Transform {
 
@@ -33,9 +32,109 @@ public class EvalExpressions implements Transform {
         variableValues.add(new HashMap<>());
 
         findAllVariables(ast.root);
-        evaluateExpression(ast.root.getChildren(), ast.root);
+        evaluateExpression(ast.root, ast.root);
     }
 
+    // TODO fix parent.removeChild en parent.addChild
+    private void evaluateExpression(ASTNode node, ASTNode parent) {
+        if (node instanceof Expression) {
+            Expression expression = (Expression) node;
+            if (node instanceof Operation) {
+                Operation operation = (Operation) expression;
+                if (operation.lhs instanceof Operation) {
+                    evaluateExpression(operation.lhs, node);
+                    return;
+                }
+                if (operation.rhs instanceof Operation) {
+                    evaluateExpression(operation.rhs, node);
+                    return;
+                }
+
+                if (operation.lhs instanceof VariableReference) {
+                    operation.lhs = variableValues.getFirst().get(((VariableReference) operation.lhs).name);
+                    evaluateExpression(operation, parent);
+                    return;
+                }
+                if (operation.rhs instanceof VariableReference) {
+                    operation.rhs = variableValues.getFirst().get(((VariableReference) operation.rhs).name);
+                    evaluateExpression(operation, parent);
+                }
+
+                Literal literal = calculateOperation(operation, operation.lhs, operation.rhs);
+                if(literal != null) {
+                    // Hier gaat het mis!
+                    parent.removeChild(node);
+                    parent.addChild(literal);
+
+                    if (parent instanceof VariableAssignment) {
+                        variableValues.getFirst().remove(((VariableAssignment) parent).name.name);
+                        variableValues.getFirst().put(((VariableAssignment) parent).name.name, literal);
+                    }
+                    return;
+                }
+            }
+            if (expression instanceof VariableReference) {
+                VariableReference variableReference = (VariableReference) expression;
+                parent.removeChild(variableReference);
+                Literal literal = variableValues.getFirst().get(variableReference.name);
+                parent.addChild(literal);
+            }
+        }
+        for (ASTNode nodes : node.getChildren()) {
+            evaluateExpression(nodes, node);
+        }
+    }
+
+
+    // Poging 8000
+//    private void evaluateOperation(Operation node, ASTNode parent) {
+//        Expression value = null;
+//
+//        if(node.lhs instanceof VariableReference) {
+//            VariableReference variableReference = (VariableReference) node.lhs;
+//            node.lhs = variableValues.getFirst().get(variableReference.name);
+//        }
+//        if(node.rhs instanceof VariableReference) {
+//            VariableReference variableReference = (VariableReference) node.rhs;
+//            node.rhs = variableValues.getFirst().get(variableReference.name);
+//        }
+//
+//        if(node instanceof MultiplyOperation) {
+//            if(node.rhs instanceof MultiplyOperation) {
+//                evaluateOperation((MultiplyOperation) node.rhs, node);
+//            }
+//            value = calculateMultiplyOperation(node.lhs, node.rhs);
+//            if(node.rhs instanceof MultiplyOperation) {
+//                evaluateOperation((Operation) value, parent);
+//            }
+//        }
+//
+//        if(node instanceof AddOperation) {
+//            if(node.rhs instanceof MultiplyOperation) {
+//                evaluateOperation((MultiplyOperation) node.rhs, node);
+//            }
+//            value = calculateAddOperation(node.lhs, node.rhs);
+//        }
+//
+//        if(node instanceof SubtractOperation) {
+//            if(node.rhs instanceof MultiplyOperation) {
+//                evaluateOperation((MultiplyOperation) node.rhs, node);
+//            }
+//            value = calculateSubtractOperation(node.lhs, node.rhs);
+//        }
+//
+//        if(node.rhs instanceof Operation) {
+//            evaluateOperation(node, parent);
+//        }
+//        if(value instanceof Operation) {
+//            evaluateOperation((Operation) value, parent);
+//        } else {
+//            replaceValue(parent, value);
+//        }
+//    }
+    //
+
+    /*
     private void evaluateExpression(List<ASTNode> nodes, ASTNode parent) {
         for (ASTNode node : nodes) {
             if (node instanceof Expression) {
@@ -90,6 +189,7 @@ public class EvalExpressions implements Transform {
 //
 //        }
     }
+*/
 
     /**
      * Executes an operation based on the operation type
@@ -195,7 +295,7 @@ public class EvalExpressions implements Transform {
                 literal = new PercentageLiteral(((PercentageLiteral) expression).value);
             } else if (expression instanceof PixelLiteral) {
                 literal = new PixelLiteral(((PixelLiteral) expression).value);
-            } else if (expression instanceof ScalarLiteral) { // TODO mag dit?
+            } else if (expression instanceof ScalarLiteral) {
                 literal = new ScalarLiteral(((ScalarLiteral) expression).value);
             }
             variableValues.getFirst().put(name, literal);
