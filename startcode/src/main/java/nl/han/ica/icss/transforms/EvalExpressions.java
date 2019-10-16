@@ -37,15 +37,15 @@ public class EvalExpressions implements Transform {
     }
 
     private void evaluateExpression(List<ASTNode> nodes, ASTNode parent) {
-        for(ASTNode node : nodes) {
-            if(node instanceof Expression) {
+        for (ASTNode node : nodes) {
+            if (node instanceof Expression) {
                 Expression expression = (Expression) node;
-                if(expression instanceof VariableReference) {
+                if (expression instanceof VariableReference) {
                     VariableReference variableReference = (VariableReference) expression;
                     parent.removeChild(variableReference);
                     Literal literal = variableValues.getFirst().get(variableReference.name);
                     parent.addChild(literal);
-                } else if(expression instanceof Operation) {
+                } else if (expression instanceof Operation) {
                     Operation operation = (Operation) expression;
                     evaluateOperation(operation, parent);
                 }
@@ -55,35 +55,36 @@ public class EvalExpressions implements Transform {
     }
 
     private void evaluateOperation(Operation operation, ASTNode parent) {
-        if(operation.lhs instanceof Operation) {
+        if (operation.lhs instanceof Operation) {
             Operation operationLhs = (Operation) operation.lhs;
-            evaluateOperation(operationLhs, operation);
+            evaluateOperation(operationLhs, operation); //
         }
-        if(operation.rhs instanceof Operation) {
+        if (operation.rhs instanceof Operation) {
             Operation operationRhs = (Operation) operation.rhs;
-            evaluateOperation(operationRhs, operation);
+            evaluateOperation(operationRhs, operation); // operation, parent
         }
 
-        if(operation.lhs instanceof VariableReference) {
+        if (operation.lhs instanceof VariableReference) {
             VariableReference variableReference = (VariableReference) operation.lhs;
             operation.lhs = variableValues.getFirst().get(variableReference.name);
         }
-        if(operation.rhs instanceof VariableReference) {
+        if (operation.rhs instanceof VariableReference) {
             VariableReference variableReference = (VariableReference) operation.rhs;
             operation.rhs = variableValues.getFirst().get(variableReference.name);
         }
 
         // Bij height: Height + 2px * 10; wordt addChild niet goed uitgevoerd: multiply wordt niet pixel(20)
         // Literal value is not saved! Continues with multiply operation instead of pixel(20)
-        System.out.println("Operation: \n" + operation + "\n");
-        System.out.println("IF INSTANCE OF: \nParent " + parent + " children: " + parent.getChildren() + "\n");
-            parent.removeChild(operation);
-        System.out.println("AFTER REMOVE: \nParent " + parent + " children: " + parent.getChildren() + "\n");
-            Literal literal = calculateOperation(operation, operation.lhs, operation.rhs);
-        System.out.println("Literal: \n" + literal + "\n");
-            parent.addChild(literal);
-        System.out.println("AFTER ADD CHILD: \nParent " + parent + " children: " + parent.getChildren() + "\n");
-        System.out.println("-=-=-=-=-=-");
+
+//        System.out.println("Operation: \n" + operation + "\n");
+//        System.out.println("IF INSTANCE OF: \nParent " + parent + " children: " + parent.getChildren() + "\n");
+        parent.removeChild(operation);
+//        System.out.println("AFTER REMOVE: \nParent " + parent + " children: " + parent.getChildren() + "\n");
+        Literal literal = calculateOperation(operation, operation.lhs, operation.rhs);
+//        System.out.println("Literal: \n" + literal + "\n");
+        parent.addChild(literal);
+//        System.out.println("AFTER ADD CHILD: \nParent " + parent + " children: " + parent.getChildren() + "\n");
+//        System.out.println("-=-=-=-=-=-");
 
 //        if(operation instanceof MultiplyOperation || operation instanceof AddOperation || operation instanceof SubtractOperation) {
 //
@@ -92,17 +93,18 @@ public class EvalExpressions implements Transform {
 
     /**
      * Executes an operation based on the operation type
+     *
      * @param operation operation type
-     * @param exLeft first expression
-     * @param exRight second expression
+     * @param exLeft    first expression
+     * @param exRight   second expression
      * @return result of an operation
      */
     private Literal calculateOperation(Operation operation, Expression exLeft, Expression exRight) {
-        if(operation instanceof MultiplyOperation) {
+        if (operation instanceof MultiplyOperation) {
             return calculateMultiplyOperation(exLeft, exRight);
-        } else if(operation instanceof AddOperation) {
+        } else if (operation instanceof AddOperation) {
             return calculateAddOperation(exLeft, exRight);
-        } else if(operation instanceof SubtractOperation) {
+        } else if (operation instanceof SubtractOperation) {
             return calculateSubtractOperation(exLeft, exRight);
         }
         return null;
@@ -110,27 +112,28 @@ public class EvalExpressions implements Transform {
 
     /**
      * Executes a multiply operation
-     * @param exLeft first expression
+     *
+     * @param exLeft  first expression
      * @param exRight second expression
      * @return result of exLeft * exRight
      */
     private Literal calculateMultiplyOperation(Expression exLeft, Expression exRight) {
-        if(exLeft instanceof ScalarLiteral) {
-            if(exRight instanceof PercentageLiteral) {
+        if (exLeft instanceof ScalarLiteral) {
+            if (exRight instanceof PercentageLiteral) {
                 int result = ((ScalarLiteral) exLeft).value * ((PercentageLiteral) exRight).value;
                 return new PercentageLiteral(result);
             }
-            if(exRight instanceof PixelLiteral) {
+            if (exRight instanceof PixelLiteral) {
                 int result = ((ScalarLiteral) exLeft).value * ((PixelLiteral) exRight).value;
                 return new PixelLiteral(result);
             }
         }
-        if(exRight instanceof ScalarLiteral) {
-            if(exLeft instanceof PercentageLiteral) {
+        if (exRight instanceof ScalarLiteral) {
+            if (exLeft instanceof PercentageLiteral) {
                 int result = ((PercentageLiteral) exLeft).value * ((ScalarLiteral) exRight).value;
                 return new PercentageLiteral(result);
             }
-            if(exLeft instanceof PixelLiteral) {
+            if (exLeft instanceof PixelLiteral) {
                 int result = ((PixelLiteral) exLeft).value * ((ScalarLiteral) exRight).value;
                 return new PixelLiteral(result);
             }
@@ -140,16 +143,17 @@ public class EvalExpressions implements Transform {
 
     /**
      * Executes an add operation
-     * @param exLeft first expression
+     *
+     * @param exLeft  first expression
      * @param exRight second expression
      * @return result of exLeft + exRight
      */
     private Literal calculateAddOperation(Expression exLeft, Expression exRight) {
-        if(exLeft instanceof PercentageLiteral) {
+        if (exLeft instanceof PercentageLiteral) {
             int result = ((PercentageLiteral) exLeft).value + ((PercentageLiteral) exRight).value;
             return new PercentageLiteral(result);
         }
-        if(exLeft instanceof PixelLiteral) {
+        if (exLeft instanceof PixelLiteral) {
             int result = ((PixelLiteral) exLeft).value + ((PixelLiteral) exRight).value;
             return new PixelLiteral(result);
         }
@@ -159,16 +163,17 @@ public class EvalExpressions implements Transform {
 
     /**
      * Executes a subtract operation
-     * @param exLeft first expression
+     *
+     * @param exLeft  first expression
      * @param exRight second expression
      * @return result of exLeft - exRight
      */
     private Literal calculateSubtractOperation(Expression exLeft, Expression exRight) {
-        if(exLeft instanceof PercentageLiteral) {
+        if (exLeft instanceof PercentageLiteral) {
             int result = ((PercentageLiteral) exLeft).value - ((PercentageLiteral) exRight).value;
             return new PercentageLiteral(result);
         }
-        if(exLeft instanceof PixelLiteral) {
+        if (exLeft instanceof PixelLiteral) {
             int result = ((PixelLiteral) exLeft).value - ((PixelLiteral) exRight).value;
             return new PixelLiteral(result);
         }
@@ -176,61 +181,25 @@ public class EvalExpressions implements Transform {
         return null;
     }
 
-
     private void findAllVariables(ASTNode node) {
-        if(node instanceof VariableAssignment) {
+        if (node instanceof VariableAssignment) {
             String name = ((VariableAssignment) node).name.name;
             Literal literal = null;
 
             Expression expression = ((VariableAssignment) node).expression;
-            if(expression instanceof BoolLiteral) {
+            if (expression instanceof BoolLiteral) {
                 literal = new BoolLiteral(((BoolLiteral) expression).value);
-            } else if(expression instanceof ColorLiteral) {
+            } else if (expression instanceof ColorLiteral) {
                 literal = new ColorLiteral(((ColorLiteral) expression).value);
-            } else if(expression instanceof PercentageLiteral) {
+            } else if (expression instanceof PercentageLiteral) {
                 literal = new PercentageLiteral(((PercentageLiteral) expression).value);
-            } else if(expression instanceof PixelLiteral) {
+            } else if (expression instanceof PixelLiteral) {
                 literal = new PixelLiteral(((PixelLiteral) expression).value);
-            } else if(expression instanceof ScalarLiteral) { // TODO mag dit?
+            } else if (expression instanceof ScalarLiteral) { // TODO mag dit?
                 literal = new ScalarLiteral(((ScalarLiteral) expression).value);
             }
             variableValues.getFirst().put(name, literal);
         }
         node.getChildren().forEach(this::findAllVariables);
     }
-//    private void findDeclarationVariables(ASTNode toBeFound) {
-//        if(toBeFound instanceof Declaration) {
-//            VariableReference variableReference = findDeclarationVariable(toBeFound.getChildren());;
-//            if(variableReference != null) {
-//                toBeFound.removeChild(variableReference);
-//                if(variableValuesMap.containsKey(variableReference.name)) {
-//                    toBeFound.addChild(variableValuesMap.get(variableReference.name));
-//                }
-//            }
-//        }
-//        toBeFound.getChildren().forEach(this::findDeclarationVariables);
-//    }
-//
-//    private VariableReference findDeclarationVariable(ArrayList<ASTNode> toBeFound) {
-//        for(ASTNode n : toBeFound) {
-//            if(n instanceof VariableReference) {
-//                return (VariableReference) n;
-//            }
-//        }
-//        return null;
-//    }
-//
-//    /**
-//     * Looks up all the Variable Assignments and puts the reference and expression
-//     * in the hashmap variableTypes
-//     * @param toBeFound
-//     */
-//    private void findAllVariables(ASTNode toBeFound) {
-//        if (toBeFound instanceof VariableAssignment) {
-//            String name = ((VariableAssignment) toBeFound).name.name;
-//            Expression expression = ((VariableAssignment) toBeFound).expression;
-//            variableValuesMap.put(name, expression);
-//        }
-//        toBeFound.getChildren().forEach(this::findAllVariables);
-//    }
 }
