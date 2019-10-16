@@ -7,20 +7,24 @@ import nl.han.ica.icss.ast.selectors.IdSelector;
 import nl.han.ica.icss.ast.selectors.TagSelector;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
 
 public class Generator {
 
     private String result = "";
+    private LinkedList<HashMap<String,Expression>> variables;
 
 	public String generate(AST ast) {
+        variables = new LinkedList<>();
+        variables.add(new HashMap<>());
+        findAllVariables(ast.root);
+
 	    generateResult(ast.root);
         return result + "}";
 	}
 
 	private void generateResult(ASTNode node) {
-	    if(node instanceof VariableAssignment) {
-	        generateVariableAssignmentResult(node);
-        }
 	    if(node instanceof Selector) {
             if(result.endsWith(";\n")) {
                 result += "}\n\n";
@@ -31,15 +35,6 @@ public class Generator {
 	        generateBodyResult(node);
         }
 	    node.getChildren().forEach(this::generateResult);
-    }
-
-    private void generateVariableAssignmentResult(ASTNode node) {
-	    if(node instanceof VariableAssignment) {
-            result += ((VariableAssignment) node).name.name + " := ";
-            generateLiteralResult(((VariableAssignment) node).expression);
-            result += "; \n";
-        }
-	    node.getChildren().forEach(this::generateVariableAssignmentResult);
     }
 
     private void generateSelectorResult(Selector node) {
@@ -68,7 +63,7 @@ public class Generator {
                 generateLiteralResult(node);
             }
             if(node instanceof VariableReference) {
-                result += ((VariableReference) node).name;
+                generateVariableValueByName(node);
             }
         }
         result += ";\n";
@@ -86,5 +81,22 @@ public class Generator {
         } else if(node instanceof ScalarLiteral) {
 	        result += ((ScalarLiteral) node).value;
         }
+    }
+
+    private void generateVariableValueByName(ASTNode node) {
+	    if(node instanceof VariableReference) {
+            if (variables.getFirst().containsKey(((VariableReference) node).name)) {
+                generateLiteralResult(variables.getFirst().get(((VariableReference) node).name));
+            }
+        }
+    }
+
+    private void findAllVariables(ASTNode node) {
+        if (node instanceof VariableAssignment) {
+            String name = ((VariableAssignment) node).name.name;
+            Expression expression = ((VariableAssignment) node).expression;
+            variables.getFirst().put(name, expression);
+        }
+        node.getChildren().forEach(this::findAllVariables);
     }
 }
