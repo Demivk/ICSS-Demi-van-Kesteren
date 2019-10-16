@@ -38,61 +38,56 @@ public class EvalExpressions implements Transform {
 
     private void evaluateExpression(List<ASTNode> nodes, ASTNode parent) {
         for(ASTNode node : nodes) {
-            if (node instanceof Expression) {
-                if (node instanceof VariableReference) {
-                    parent.removeChild(node);
-                    Literal literal = variableValues.getFirst().get(((VariableReference) node).name);
+            if(node instanceof Expression) {
+                Expression expression = (Expression) node;
+                if(expression instanceof VariableReference) {
+                    VariableReference variableReference = (VariableReference) expression;
+                    parent.removeChild(variableReference);
+                    Literal literal = variableValues.getFirst().get(variableReference.name);
                     parent.addChild(literal);
-                }
-                if (node instanceof Operation) {
-//                    evaluateOperation((Operation) node, parent);
-                    Operation operation = (Operation) node;
-                    if (operation.lhs instanceof Operation) {
-                        System.out.println("LHS = OPERATION");
-                        evaluateExpression(operation.lhs.getChildren(), operation.lhs);
-                    }
-                    if (operation.rhs instanceof Operation) {
-                        System.out.println("RHS = OPERATION");
-                        evaluateExpression(operation.rhs.getChildren(), operation.rhs);
-                    }
-                    if (operation.lhs instanceof VariableReference) {
-                        operation.lhs = variableValues.getFirst().get(((VariableReference) operation.lhs).name);
-                    }
-                    if (operation.rhs instanceof VariableReference) {
-                        operation.rhs = variableValues.getFirst().get(((VariableReference) operation.rhs).name);
-                    }
-                    parent.removeChild(node);
-                    Literal literal = calculateOperation(operation, operation.lhs, operation.rhs);
-                    parent.addChild(literal);
+                } else if(expression instanceof Operation) {
+                    Operation operation = (Operation) expression;
+                    evaluateOperation(operation, parent);
                 }
             }
-            // TODO null
             evaluateExpression(node.getChildren(), node);
         }
     }
 
     private void evaluateOperation(Operation operation, ASTNode parent) {
-        if(operation instanceof MultiplyOperation) {
-            parent.removeChild(operation);
-            Literal literal = calculateMultiplyOperation(operation.lhs, operation.rhs);
-            parent.addChild(literal);
-        }
         if(operation.lhs instanceof Operation) {
-            evaluateOperation(operation, operation.lhs);
+            Operation operationLhs = (Operation) operation.lhs;
+            evaluateOperation(operationLhs, operation);
         }
         if(operation.rhs instanceof Operation) {
-            evaluateOperation(operation, operation.rhs);
+            Operation operationRhs = (Operation) operation.rhs;
+            evaluateOperation(operationRhs, operation);
         }
-        if(operation instanceof AddOperation) {
+
+        if(operation.lhs instanceof VariableReference) {
+            VariableReference variableReference = (VariableReference) operation.lhs;
+            operation.lhs = variableValues.getFirst().get(variableReference.name);
+        }
+        if(operation.rhs instanceof VariableReference) {
+            VariableReference variableReference = (VariableReference) operation.rhs;
+            operation.rhs = variableValues.getFirst().get(variableReference.name);
+        }
+
+        // Bij height: Height + 2px * 10; wordt addChild niet goed uitgevoerd: multiply wordt niet pixel(20)
+        // Literal value is not saved! Continues with multiply operation instead of pixel(20)
+        System.out.println("Operation: \n" + operation + "\n");
+        System.out.println("IF INSTANCE OF: \nParent " + parent + " children: " + parent.getChildren() + "\n");
             parent.removeChild(operation);
-            Literal literal = calculateAddOperation(operation.lhs, operation.rhs);
+        System.out.println("AFTER REMOVE: \nParent " + parent + " children: " + parent.getChildren() + "\n");
+            Literal literal = calculateOperation(operation, operation.lhs, operation.rhs);
+        System.out.println("Literal: \n" + literal + "\n");
             parent.addChild(literal);
-        }
-        if(operation instanceof SubtractOperation) {
-            parent.removeChild(operation);
-            Literal literal = calculateSubtractOperation(operation.lhs, operation.rhs);
-            parent.addChild(literal);
-        }
+        System.out.println("AFTER ADD CHILD: \nParent " + parent + " children: " + parent.getChildren() + "\n");
+        System.out.println("-=-=-=-=-=-");
+
+//        if(operation instanceof MultiplyOperation || operation instanceof AddOperation || operation instanceof SubtractOperation) {
+//
+//        }
     }
 
     /**
@@ -125,7 +120,7 @@ public class EvalExpressions implements Transform {
                 int result = ((ScalarLiteral) exLeft).value * ((PercentageLiteral) exRight).value;
                 return new PercentageLiteral(result);
             }
-            if (exRight instanceof PixelLiteral) {
+            if(exRight instanceof PixelLiteral) {
                 int result = ((ScalarLiteral) exLeft).value * ((PixelLiteral) exRight).value;
                 return new PixelLiteral(result);
             }
