@@ -17,8 +17,9 @@ public class Checker {
     public void check(AST ast) {
         variableTypes = new LinkedList<>();
         variableTypes.add(new HashMap<>());
+        // TODO findAllVariables hier ipv in methoden?
 
-        for(ASTNode node : ast.root.getChildren()) {
+//        for(ASTNode node : ast.root.getChildren()) {
 //            checkAllowedStyleAttributes(node); // works
 //            checkUndefinedVariables(node); // works
 //            checkOperationsAreAllowed(node); // does not work with variables (*) and multiple operands
@@ -26,7 +27,7 @@ public class Checker {
 //            checkDeclarationValuesValid(node); // does not work with operations with variables
 //            checkIfConditionIsBoolean(node); // works
 //            checkNoBooleansInOperation(node); // works
-        }
+//        }
     }
 
     // TODO optimaliseren: lijst maken van allowed attributes?
@@ -59,9 +60,9 @@ public class Checker {
      */
     private void checkUndefinedVariables(ASTNode toBeChecked) {
         if(toBeChecked.getChildren().size() != 1) {
-            if(toBeChecked instanceof VariableAssignment) {
-                 variableTypes.getFirst().put(((VariableAssignment)toBeChecked).name.name, resolveExpressionType(((VariableAssignment) toBeChecked).expression));
-            } else if(toBeChecked instanceof Declaration) {
+            findAllVariables(toBeChecked);
+
+            if(toBeChecked instanceof Declaration) {
                 if(((Declaration) toBeChecked).expression instanceof VariableReference && !variableTypes.getFirst().containsKey(((VariableReference) ((Declaration)toBeChecked).expression).name)) {
                     toBeChecked.setError("Unknown variable " + ((VariableReference) ((Declaration) toBeChecked).expression).name + " not defined.");
                 }
@@ -105,11 +106,7 @@ public class Checker {
      */
     private void checkOperationsAreAllowed(ASTNode toBeChecked) {
         if(toBeChecked.getChildren().size() != 1) {
-            if(toBeChecked instanceof VariableAssignment) {
-                String name = ((VariableAssignment)toBeChecked).name.name;
-                ExpressionType expressionType = resolveExpressionType(((VariableAssignment) toBeChecked).expression);
-                variableTypes.getFirst().put(name, expressionType);
-            }
+            findAllVariables(toBeChecked);
 
             if(toBeChecked instanceof Operation) {
                 if(toBeChecked instanceof AddOperation || toBeChecked instanceof SubtractOperation) {
@@ -179,11 +176,7 @@ public class Checker {
      */
     private void checkDeclarationValuesValid(ASTNode toBeChecked) {
         if(toBeChecked.getChildren().size() != 1) {
-            if(toBeChecked instanceof VariableAssignment) {
-                String name = ((VariableAssignment)toBeChecked).name.name;
-                ExpressionType expressionType = resolveExpressionType(((VariableAssignment) toBeChecked).expression);
-                variableTypes.getFirst().put(name, expressionType);
-            }
+            findAllVariables(toBeChecked);
 
             if(toBeChecked instanceof Declaration) {
                 if(((Declaration) toBeChecked).property.name.equals("color") || ((Declaration) toBeChecked).property.name.equals("background-color")) {
@@ -221,11 +214,7 @@ public class Checker {
      */
     private void checkIfConditionIsBoolean(ASTNode toBeChecked) {
         if (toBeChecked.getChildren().size() != 1) {
-            if (toBeChecked instanceof VariableAssignment) {
-                String name = ((VariableAssignment) toBeChecked).name.name;
-                ExpressionType expressionType = resolveExpressionType(((VariableAssignment) toBeChecked).expression);
-                variableTypes.getFirst().put(name, expressionType);
-            }
+            findAllVariables(toBeChecked);
 
             if (toBeChecked instanceof IfClause) {
                 if (((IfClause) toBeChecked).getConditionalExpression() instanceof VariableReference) {
@@ -259,6 +248,21 @@ public class Checker {
             }
             toBeChecked.getChildren().forEach(this::checkNoBooleansInOperation);
         }
+    }
+
+    // TODO resolveExpressionType weghalen? -> fixen andere methoden
+    /**
+     * Looks up all the Variable Assignments and puts the reference and expression
+     * in the hashmap variableTypes
+     * @param toBeFound
+     */
+    private void findAllVariables(ASTNode toBeFound) {
+        if (toBeFound instanceof VariableAssignment) {
+            String name = ((VariableAssignment) toBeFound).name.name;
+            ExpressionType expressionType = resolveExpressionType(((VariableAssignment) toBeFound).expression);
+            variableTypes.getFirst().put(name, expressionType);
+        }
+        toBeFound.getChildren().forEach(this::findAllVariables);
     }
 
     /**
