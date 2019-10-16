@@ -1,22 +1,17 @@
 package nl.han.ica.icss.transforms;
 
 import nl.han.ica.icss.ast.*;
-import nl.han.ica.icss.ast.literals.PercentageLiteral;
-import nl.han.ica.icss.ast.literals.PixelLiteral;
-import nl.han.ica.icss.ast.literals.ScalarLiteral;
+import nl.han.ica.icss.ast.literals.*;
 import nl.han.ica.icss.ast.operations.AddOperation;
 import nl.han.ica.icss.ast.operations.MultiplyOperation;
 import nl.han.ica.icss.ast.operations.SubtractOperation;
-import nl.han.ica.icss.ast.types.ExpressionType;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 
 public class EvalExpressions implements Transform {
 
     private LinkedList<HashMap<String, Literal>> variableValues;
-    private HashMap<String, Expression> variableValuesMap;
 
     public EvalExpressions() {
         variableValues = new LinkedList<>();
@@ -25,160 +20,164 @@ public class EvalExpressions implements Transform {
     /*
     Implementeer de EvalExpressions transformatie. Deze transformatie vervangt
     alle Expression knopen in de AST door een Literal knoop met de berekende waarde.
+
+    Oftewel, hier worden:
+    - de variabelen vervangen door de bijbehorende waarden (--> Generator, ipv print vervangen: remove en add map?)
+    - berekeningen uitgevoerd
      */
 
     @Override
     public void apply(AST ast) {
         variableValues = new LinkedList<>();
-        variableValuesMap = new HashMap<>();
-        //variableValues.add(new HashMap<>());
+        variableValues.add(new HashMap<>());
 
         findAllVariables(ast.root);
-        findDeclarationVariables(ast.root);
+        evaluateExpression(ast.root);
     }
 
-    private void findDeclarationVariables(ASTNode toBeFound) {
-        if(toBeFound instanceof Declaration) {
-            VariableReference variableReference = findDeclarationVariable(toBeFound.getChildren());;
-            if(variableReference != null) {
-                toBeFound.removeChild(variableReference);
-                if(variableValuesMap.containsKey(variableReference.name)) {
-                    toBeFound.addChild(variableValuesMap.get(variableReference.name));
+    private void evaluateExpression(ASTNode node) {
+        if(node instanceof Expression) {
+            if(node instanceof Operation) {
+                Operation operation = (Operation) node;
+                if(operation.lhs instanceof Operation) {
+                    evaluateExpression(operation.lhs);
                 }
+                if(operation.rhs instanceof Operation) {
+                    evaluateExpression(operation.rhs);
+                }
+                if(operation.lhs instanceof VariableReference) {
+                    operation.lhs = variableValues.getFirst().get(((VariableReference) operation.lhs).name);
+                }
+                if(operation.rhs instanceof VariableReference) {
+                    operation.rhs = variableValues.getFirst().get(((VariableReference) operation.rhs).name);
+                }
+                System.out.println(node);
+                Literal literal = calculateOperation(operation, operation.lhs, operation.rhs);
+                System.out.println("Literal: " + literal);
+            }
+//            if(node instanceof VariableReference) {
+//
+//            }
+        }
+        node.getChildren().forEach(this::evaluateExpression);
+    }
+
+    private Literal calculateOperation(Operation operation, Expression exLeft, Expression exRight) {
+        if(operation instanceof MultiplyOperation) {
+            return calculateMultiplyOperation(exLeft, exRight);
+        } else if(operation instanceof AddOperation) {
+            return calculateAddOperation(exLeft, exRight);
+        } else if(operation instanceof SubtractOperation) {
+            return calculateSubtractOperation(exLeft, exRight);
+        }
+        return null;
+    }
+
+    private Literal calculateMultiplyOperation(Expression exLeft, Expression exRight) {
+        if(exLeft instanceof ScalarLiteral) {
+            if(exRight instanceof PercentageLiteral) {
+                int result = ((ScalarLiteral) exLeft).value * ((PercentageLiteral) exRight).value;
+                return new PercentageLiteral(result);
+            }
+            if (exRight instanceof PixelLiteral) {
+                int result = ((ScalarLiteral) exLeft).value * ((PixelLiteral) exRight).value;
+                return new PixelLiteral(result);
             }
         }
-        toBeFound.getChildren().forEach(this::findDeclarationVariables);
-    }
-
-    private VariableReference findDeclarationVariable(ArrayList<ASTNode> toBeFound) {
-        for(ASTNode n : toBeFound) {
-            if(n instanceof VariableReference) {
-                return (VariableReference) n;
+        if(exRight instanceof ScalarLiteral) {
+            if(exLeft instanceof PercentageLiteral) {
+                int result = ((PercentageLiteral) exLeft).value * ((ScalarLiteral) exRight).value;
+                return new PercentageLiteral(result);
+            }
+            if(exLeft instanceof PixelLiteral) {
+                int result = ((PixelLiteral) exLeft).value * ((ScalarLiteral) exRight).value;
+                return new PixelLiteral(result);
             }
         }
         return null;
     }
 
-    /**
-     * Looks up all the Variable Assignments and puts the reference and expression
-     * in the hashmap variableTypes
-     * @param toBeFound
-     */
-    private void findAllVariables(ASTNode toBeFound) {
-        if (toBeFound instanceof VariableAssignment) {
-            String name = ((VariableAssignment) toBeFound).name.name;
-            Expression expression = ((VariableAssignment) toBeFound).expression;
-            variableValuesMap.put(name, expression);
+    private Literal calculateAddOperation(Expression exLeft, Expression exRight) {
+        if(exLeft instanceof PercentageLiteral) {
+            int result = ((PercentageLiteral) exLeft).value + ((PercentageLiteral) exRight).value;
+            return new PercentageLiteral(result);
         }
-        toBeFound.getChildren().forEach(this::findAllVariables);
+        if(exLeft instanceof PixelLiteral) {
+            int result = ((PixelLiteral) exLeft).value + ((PixelLiteral) exRight).value;
+            return new PixelLiteral(result);
+        }
+        // Scalar?
+        return null;
     }
 
-//    private void walkAST(ASTNode node) {
-//        if(node.getChildren().size() != 1) {
-//            if(node instanceof Declaration) {
-//                calculateDeclaration((Declaration) node);
-//            } else if(node instanceof VariableAssignment) {
-//                calculateVariableAssignment((VariableAssignment) node);
-//            }
-//        }
-//    }
-//
-//    private void calculateDeclaration(Declaration declaration) {
-//        declaration.expression = calculateExpression(declaration.expression);
-//    }
-//
-//    private void calculateVariableAssignment(VariableAssignment variableAssignment) {
-//        String varName = variableAssignment.name.name;
-//        Literal value = calculateExpression(variableAssignment.expression);
-//
-//        HashMap<String, Literal> map = variableValues.getLast();
-//        map.put(varName, value);
-//        variableAssignment.expression = value;
-//    }
-//
-//    private Literal calculateExpression(Expression expression) {
-//        if(expression instanceof Operation) {
-//            return calculateOperation((Operation)expression);
-//        } else if(expression instanceof VariableReference) {
-//            VariableReference variableReference = (VariableReference)expression;
-//            Literal value = null;
-//            for(HashMap<String, Literal> map : variableValues) {
-//                if(map.containsKey(variableReference.name)) {
-//                    value = map.get(variableReference.name);
+    private Literal calculateSubtractOperation(Expression exLeft, Expression exRight) {
+        if(exLeft instanceof PercentageLiteral) {
+            int result = ((PercentageLiteral) exLeft).value - ((PercentageLiteral) exRight).value;
+            return new PercentageLiteral(result);
+        }
+        if(exLeft instanceof PixelLiteral) {
+            int result = ((PixelLiteral) exLeft).value - ((PixelLiteral) exRight).value;
+            return new PixelLiteral(result);
+        }
+        // Scalar?
+        return null;
+    }
+
+
+    private void findAllVariables(ASTNode node) {
+        if(node instanceof VariableAssignment) {
+            String name = ((VariableAssignment) node).name.name;
+            Literal literal = null;
+
+            Expression expression = ((VariableAssignment) node).expression;
+            if(expression instanceof BoolLiteral) {
+                literal = new BoolLiteral(((BoolLiteral) expression).value);
+            } else if(expression instanceof ColorLiteral) {
+                literal = new ColorLiteral(((ColorLiteral) expression).value);
+            } else if(expression instanceof PercentageLiteral) {
+                literal = new PercentageLiteral(((PercentageLiteral) expression).value);
+            } else if(expression instanceof PixelLiteral) {
+                literal = new PixelLiteral(((PixelLiteral) expression).value);
+            } else if(expression instanceof ScalarLiteral) { // TODO mag dit?
+                literal = new ScalarLiteral(((ScalarLiteral) expression).value);
+            }
+            variableValues.getFirst().put(name, literal);
+        }
+        node.getChildren().forEach(this::findAllVariables);
+    }
+//    private void findDeclarationVariables(ASTNode toBeFound) {
+//        if(toBeFound instanceof Declaration) {
+//            VariableReference variableReference = findDeclarationVariable(toBeFound.getChildren());;
+//            if(variableReference != null) {
+//                toBeFound.removeChild(variableReference);
+//                if(variableValuesMap.containsKey(variableReference.name)) {
+//                    toBeFound.addChild(variableValuesMap.get(variableReference.name));
 //                }
 //            }
-//            return value;
-//        } else {
-//            return (Literal)expression;
 //        }
+//        toBeFound.getChildren().forEach(this::findDeclarationVariables);
 //    }
 //
-//    private Literal calculateOperation(Operation operation) {
-//        Literal lhs = calculateExpression(operation.lhs);
-//        Literal rhs = calculateExpression(operation.rhs);
-//
-//        if(operation instanceof AddOperation) {
-//            return calculateAddOperation(lhs, rhs);
-//        } else if(operation instanceof MultiplyOperation) {
-//            return calculateMultiplyOperation(lhs, rhs);
-//        } else {
-//            return calculateSubtractOperation(lhs, rhs);
+//    private VariableReference findDeclarationVariable(ArrayList<ASTNode> toBeFound) {
+//        for(ASTNode n : toBeFound) {
+//            if(n instanceof VariableReference) {
+//                return (VariableReference) n;
+//            }
 //        }
-//    }
-//
-//    private Literal calculateAddOperation(Literal lhs, Literal rhs) {
-//        int result;
-//
-//        if(lhs instanceof PercentageLiteral) {
-//            result = ((PercentageLiteral) lhs).value + ((PercentageLiteral) rhs).value;
-//            return new PercentageLiteral(result);
-//        } else if(lhs instanceof PixelLiteral) {
-//            result = ((PixelLiteral) lhs).value + ((PixelLiteral) rhs).value;
-//            return new PixelLiteral(result);
-//        } else {
-//            result = ((ScalarLiteral) lhs).value + ((ScalarLiteral) rhs).value;
-//            return new ScalarLiteral(result);
-//        }
-//    }
-//
-//    private Literal calculateMultiplyOperation(Literal lhs, Literal rhs) {
-//        int result;
-//        Literal scalarSide, nonScalarSide;
-//
-//        if(lhs instanceof ScalarLiteral) {
-//            scalarSide = lhs;
-//            nonScalarSide = rhs;
-//        } else {
-//            scalarSide = rhs;
-//            nonScalarSide = lhs;
-//        }
-//
-//        if(nonScalarSide instanceof PercentageLiteral) {
-//            result = ((PercentageLiteral) nonScalarSide).value * ((ScalarLiteral) scalarSide).value;
-//            return new PercentageLiteral(result);
-//        } else if(nonScalarSide instanceof PixelLiteral) {
-//            result = ((PixelLiteral) nonScalarSide).value * ((ScalarLiteral) scalarSide).value;
-//            return new PixelLiteral(result);
-//        } /*else {
-//            result = ((ScalarLiteral) nonScalarSide).value * ((ScalarLiteral) scalarSide).value;
-//            return new ScalarLiteral(result);
-//        }*/
 //        return null;
-//
 //    }
 //
-//    private Literal calculateSubtractOperation(Literal lhs, Literal rhs) {
-//        int result;
-//
-//        if(lhs instanceof PercentageLiteral) {
-//            result = ((PercentageLiteral) lhs).value - ((PercentageLiteral) rhs).value;
-//            return new PercentageLiteral(result);
-//        } else if(lhs instanceof PixelLiteral) {
-//            result = ((PixelLiteral) lhs).value - ((PixelLiteral) rhs).value;
-//            return new PixelLiteral(result);
-//        } else {
-//            result = ((ScalarLiteral) lhs).value - ((ScalarLiteral) rhs).value;
-//            return new ScalarLiteral(result);
+//    /**
+//     * Looks up all the Variable Assignments and puts the reference and expression
+//     * in the hashmap variableTypes
+//     * @param toBeFound
+//     */
+//    private void findAllVariables(ASTNode toBeFound) {
+//        if (toBeFound instanceof VariableAssignment) {
+//            String name = ((VariableAssignment) toBeFound).name.name;
+//            Expression expression = ((VariableAssignment) toBeFound).expression;
+//            variableValuesMap.put(name, expression);
 //        }
+//        toBeFound.getChildren().forEach(this::findAllVariables);
 //    }
 }
