@@ -8,6 +8,7 @@ import nl.han.ica.icss.ast.operations.SubtractOperation;
 
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 
 public class EvalExpressions implements Transform {
 
@@ -32,34 +33,66 @@ public class EvalExpressions implements Transform {
         variableValues.add(new HashMap<>());
 
         findAllVariables(ast.root);
-        evaluateExpression(ast.root);
+        evaluateExpression(ast.root.getChildren(), ast.root);
     }
 
-    private void evaluateExpression(ASTNode node) {
-        if(node instanceof Expression) {
-            if(node instanceof Operation) {
-                Operation operation = (Operation) node;
-                if(operation.lhs instanceof Operation) {
-                    evaluateExpression(operation.lhs);
+    private void evaluateExpression(List<ASTNode> nodes, ASTNode parent) {
+        for(ASTNode node : nodes) {
+            if (node instanceof Expression) {
+                if (node instanceof VariableReference) {
+                    parent.removeChild(node);
+                    Literal literal = variableValues.getFirst().get(((VariableReference) node).name);
+                    parent.addChild(literal);
                 }
-                if(operation.rhs instanceof Operation) {
-                    evaluateExpression(operation.rhs);
+                if (node instanceof Operation) {
+//                    evaluateOperation((Operation) node, parent);
+                    Operation operation = (Operation) node;
+                    if (operation.lhs instanceof Operation) {
+                        System.out.println("LHS = OPERATION");
+                        evaluateExpression(operation.lhs.getChildren(), operation.lhs);
+                    }
+                    if (operation.rhs instanceof Operation) {
+                        System.out.println("RHS = OPERATION");
+                        evaluateExpression(operation.rhs.getChildren(), operation.rhs);
+                    }
+                    if (operation.lhs instanceof VariableReference) {
+                        operation.lhs = variableValues.getFirst().get(((VariableReference) operation.lhs).name);
+                    }
+                    if (operation.rhs instanceof VariableReference) {
+                        operation.rhs = variableValues.getFirst().get(((VariableReference) operation.rhs).name);
+                    }
+                    parent.removeChild(node);
+                    Literal literal = calculateOperation(operation, operation.lhs, operation.rhs);
+                    parent.addChild(literal);
                 }
-                if(operation.lhs instanceof VariableReference) {
-                    operation.lhs = variableValues.getFirst().get(((VariableReference) operation.lhs).name);
-                }
-                if(operation.rhs instanceof VariableReference) {
-                    operation.rhs = variableValues.getFirst().get(((VariableReference) operation.rhs).name);
-                }
-                System.out.println(node);
-                Literal literal = calculateOperation(operation, operation.lhs, operation.rhs);
-                System.out.println("Literal: " + literal);
             }
-//            if(node instanceof VariableReference) {
-//
-//            }
+            // TODO null
+            evaluateExpression(node.getChildren(), node);
         }
-        node.getChildren().forEach(this::evaluateExpression);
+    }
+
+    private void evaluateOperation(Operation operation, ASTNode parent) {
+        if(operation instanceof MultiplyOperation) {
+            parent.removeChild(operation);
+            Literal literal = calculateMultiplyOperation(operation.lhs, operation.rhs);
+            parent.addChild(literal);
+        }
+        if(operation.lhs instanceof Operation) {
+            evaluateOperation(operation, operation.lhs);
+        }
+        if(operation.rhs instanceof Operation) {
+            evaluateOperation(operation, operation.rhs);
+        }
+        if(operation instanceof AddOperation) {
+            parent.removeChild(operation);
+            Literal literal = calculateAddOperation(operation.lhs, operation.rhs);
+            parent.addChild(literal);
+        }
+        if(operation instanceof SubtractOperation) {
+            parent.removeChild(operation);
+            Literal literal = calculateSubtractOperation(operation.lhs, operation.rhs);
+            parent.addChild(literal);
+        }
     }
 
     /**
