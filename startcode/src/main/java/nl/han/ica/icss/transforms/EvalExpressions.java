@@ -7,13 +7,16 @@ import nl.han.ica.icss.ast.literals.ScalarLiteral;
 import nl.han.ica.icss.ast.operations.AddOperation;
 import nl.han.ica.icss.ast.operations.MultiplyOperation;
 import nl.han.ica.icss.ast.operations.SubtractOperation;
+import nl.han.ica.icss.ast.types.ExpressionType;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 
 public class EvalExpressions implements Transform {
 
     private LinkedList<HashMap<String, Literal>> variableValues;
+    private HashMap<String, Expression> variableValuesMap;
 
     public EvalExpressions() {
         variableValues = new LinkedList<>();
@@ -27,8 +30,47 @@ public class EvalExpressions implements Transform {
     @Override
     public void apply(AST ast) {
         variableValues = new LinkedList<>();
-        variableValues.add(new HashMap<>());
-//        walkAST(ast.root);
+        variableValuesMap = new HashMap<>();
+        //variableValues.add(new HashMap<>());
+
+        findAllVariables(ast.root);
+        findDeclarationVariables(ast.root);
+    }
+
+    private void findDeclarationVariables(ASTNode toBeFound) {
+        if(toBeFound instanceof Declaration) {
+            VariableReference variableReference = findDeclarationVariable(toBeFound.getChildren());;
+            if(variableReference != null) {
+                toBeFound.removeChild(variableReference);
+                if(variableValuesMap.containsKey(variableReference.name)) {
+                    toBeFound.addChild(variableValuesMap.get(variableReference.name));
+                }
+            }
+        }
+        toBeFound.getChildren().forEach(this::findDeclarationVariables);
+    }
+
+    private VariableReference findDeclarationVariable(ArrayList<ASTNode> toBeFound) {
+        for(ASTNode n : toBeFound) {
+            if(n instanceof VariableReference) {
+                return (VariableReference) n;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Looks up all the Variable Assignments and puts the reference and expression
+     * in the hashmap variableTypes
+     * @param toBeFound
+     */
+    private void findAllVariables(ASTNode toBeFound) {
+        if (toBeFound instanceof VariableAssignment) {
+            String name = ((VariableAssignment) toBeFound).name.name;
+            Expression expression = ((VariableAssignment) toBeFound).expression;
+            variableValuesMap.put(name, expression);
+        }
+        toBeFound.getChildren().forEach(this::findAllVariables);
     }
 
 //    private void walkAST(ASTNode node) {
