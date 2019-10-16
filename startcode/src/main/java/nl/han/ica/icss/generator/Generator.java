@@ -18,15 +18,28 @@ public class Generator {
 	}
 
 	private void generateResult(ASTNode node) {
+	    if(node instanceof VariableAssignment) {
+	        generateVariableAssignmentResult(node);
+        }
 	    if(node instanceof Selector) {
-            if(result.endsWith(";\n")){
+            if(result.endsWith(";\n")) {
                 result += "}\n\n";
             }
 	        generateSelectorResult((Selector) node);
-        } else if(node instanceof Declaration) {
+        }
+	    if(node instanceof Declaration) {
 	        generateBodyResult(node);
         }
 	    node.getChildren().forEach(this::generateResult);
+    }
+
+    private void generateVariableAssignmentResult(ASTNode node) {
+	    if(node instanceof VariableAssignment) {
+            result += ((VariableAssignment) node).name.name + " := ";
+            generateLiteralResult(((VariableAssignment) node).expression);
+            result += "; \n";
+        }
+	    node.getChildren().forEach(this::generateVariableAssignmentResult);
     }
 
     private void generateSelectorResult(Selector node) {
@@ -53,6 +66,9 @@ public class Generator {
             }
             if (node instanceof Expression) {
                 generateLiteralResult(node);
+            }
+            if(node instanceof VariableReference) {
+                result += ((VariableReference) node).name;
             }
         }
         result += ";\n";
