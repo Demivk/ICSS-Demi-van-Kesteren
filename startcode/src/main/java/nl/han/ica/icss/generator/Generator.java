@@ -9,7 +9,8 @@ import nl.han.ica.icss.ast.selectors.TagSelector;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
-
+// TODO javadoc
+// TODO varref/varass naar transformer?
 public class Generator {
 
     private String result = "";
@@ -31,6 +32,9 @@ public class Generator {
             }
 	        generateSelectorResult((Selector) node);
         }
+//	    if(node instanceof IfClause) {
+//            generateIfClauseResult(node);
+//        }
 	    if(node instanceof Declaration) {
 	        generateBodyResult(node);
         }
@@ -65,9 +69,39 @@ public class Generator {
             if(node instanceof VariableReference) {
                 generateVariableValueByName(node);
             }
+//            if(node instanceof Operation) {
+//                generateOperationResult(node);
+//            }
         }
         result += ";\n";
     }
+
+//    private void generateIfClauseResult(ASTNode node) {
+//	    if(node instanceof IfClause) {
+//	        result += "IFFF";
+//	        result += ((IfClause) node).conditionalExpression; // varref
+//	        generateVariableValueByName(node);
+//	        result += "\n";
+//	        // als conditie in if = true
+//            // zet dat als result anders niet
+//	        node.getChildren().forEach(this::generateIfClauseResult);
+//        }
+//    }
+
+//    private void generateOperationResult(ASTNode node) {
+//	    if(node instanceof Operation) {
+//	        if(node instanceof MultiplyOperation) {
+//	            result += "MULTIPLY\n";
+//            }
+//	        if(node instanceof AddOperation) {
+//                result += "ADD\n";
+//            }
+//	        if(node instanceof SubtractOperation) {
+//                result += "SUBTRACT\n";
+//            }
+//        }
+//	    node.getChildren().forEach(this::generateOperationResult);
+//    }
 
     private void generateLiteralResult(ASTNode node) {
 	    if(node instanceof BoolLiteral) {
