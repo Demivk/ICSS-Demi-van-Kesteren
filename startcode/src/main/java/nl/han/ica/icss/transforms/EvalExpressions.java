@@ -17,15 +17,6 @@ public class EvalExpressions implements Transform {
         variableValues = new LinkedList<>();
     }
 
-    /*
-    Implementeer de EvalExpressions transformatie. Deze transformatie vervangt
-    alle Expression knopen in de AST door een Literal knoop met de berekende waarde.
-
-    Oftewel, hier worden:
-    - de variabelen vervangen door de bijbehorende waarden (--> Generator, ipv print vervangen: remove en add map?)
-    - berekeningen uitgevoerd
-     */
-
     @Override
     public void apply(AST ast) {
         variableValues = new LinkedList<>();
@@ -60,7 +51,7 @@ public class EvalExpressions implements Transform {
                     evaluateExpression(operation, parent);
                 }
 
-                Literal literal = calculateOperation(operation, operation.lhs, operation.rhs);
+                Literal literal = calculateOperation(operation);
                 if(literal != null) {
                     // Hier gaat het mis!
                     parent.removeChild(node);
@@ -195,17 +186,23 @@ public class EvalExpressions implements Transform {
      * Executes an operation based on the operation type
      *
      * @param operation operation type
-     * @param exLeft    first expression
-     * @param exRight   second expression
      * @return result of an operation
      */
-    private Literal calculateOperation(Operation operation, Expression exLeft, Expression exRight) {
+    private Literal calculateOperation(Operation operation) {
+        // Wellicht overbodig?
+        if(operation.lhs instanceof Operation) {
+            operation.lhs = calculateOperation((Operation) operation.lhs);
+        }
+        if(operation.rhs instanceof Operation) {
+            operation.rhs = calculateOperation((Operation) operation.rhs);
+        }
+
         if (operation instanceof MultiplyOperation) {
-            return calculateMultiplyOperation(exLeft, exRight);
+            return calculateMultiplyOperation(operation.lhs, operation.rhs);
         } else if (operation instanceof AddOperation) {
-            return calculateAddOperation(exLeft, exRight);
+            return calculateAddOperation(operation.lhs, operation.rhs);
         } else if (operation instanceof SubtractOperation) {
-            return calculateSubtractOperation(exLeft, exRight);
+            return calculateSubtractOperation(operation.lhs, operation.rhs);
         }
         return null;
     }
