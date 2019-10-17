@@ -6,6 +6,7 @@ import nl.han.ica.icss.ast.operations.AddOperation;
 import nl.han.ica.icss.ast.operations.MultiplyOperation;
 import nl.han.ica.icss.ast.operations.SubtractOperation;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 
@@ -23,9 +24,7 @@ public class EvalExpressions implements Transform {
         variableValues.add(new HashMap<>());
         findAllVariables(ast.root);
 
-
-
-        //evaluateExpression(ast.root, ast.root);
+        evaluateExpression(ast.root.getChildren(), ast.root);
     }
 
     /*
@@ -219,7 +218,118 @@ public class EvalExpressions implements Transform {
 //        return null;
 //    }
 
+    /*---*/
+
+//    private void evaluateExpression(ASTNode node) {
+//        if(node instanceof Declaration) {
+//            calculateDeclaration((Declaration) node);
+//        }
+//        if (node instanceof VariableAssignment) {
+//            String name = ((VariableAssignment) node).name.name;
+//            Literal literal = calculateExpression(((VariableAssignment) node).expression);
+//            variableValues.getLast().put(name, literal); // getLast() ?
+//            ((VariableAssignment) node).expression = literal;
+//        }
+//
+//        for(ASTNode child : node.getChildren()) {
+//            evaluateExpression(child);
+//        }
+//    }
+//
+//    private void calculateDeclaration(Declaration declaration) {
+//        declaration.expression = calculateExpression(declaration.expression);
+//    }
+//
+//    private Literal calculateExpression(Expression expression) {
+//        if (expression instanceof Operation) {
+//            return calculateOperation((Operation) expression);
+//        }
+//        if (expression instanceof VariableReference) {
+//            Literal literal = null;
+//            if(variableValues.getFirst().containsKey(((VariableReference) expression).name)) {
+//                literal = variableValues.getFirst().get(((VariableReference) expression).name);
+//            }
+//            return literal;
+//        }
+//        return null;
+//    }
+//
+//    private Literal calculateOperation(Operation operation) {
+//        Literal left = calculateExpression(operation.lhs);
+//        Literal right = calculateExpression(operation.rhs);
+//
+//        if(operation instanceof MultiplyOperation) {
+//            return calculateMultiplyOperation(left, right);
+//        } else if(operation instanceof AddOperation) {
+//            return calculateAddOperation(left, right);
+//        } else if(operation instanceof SubtractOperation) {
+//            return calculateSubtractOperation(left, right);
+//        }
+//        return null;
+//    }
+
+    /*---*/
+
+
+    // dit ergens dumpen?
+    /*
+    Literal literal = calculateOperation(child);
+                if(literal != null) {
+                    parent.removeChild(child);
+                    parent.addChild(literal);
+
+//                    if (parent instanceof VariableAssignment) {
+//                        variableValues.getFirst().remove(((VariableAssignment) parent).name.name);
+//                        variableValues.getFirst().put(((VariableAssignment) parent).name.name, literal);
+//                    }
+//                    return;
+}
+     */
     
+    private void evaluateExpression(ArrayList<ASTNode> children, ASTNode parent) {
+        for(ASTNode child : children) {
+            if(parent instanceof Declaration) {
+                if(child instanceof Operation) {
+                    evaluateOperation((Operation) child);
+                }
+                if(child instanceof VariableReference) {
+                    VariableReference variableReference = (VariableReference) child;
+                    if(variableValues.getFirst().containsKey(variableReference.name)) {
+                        ((Declaration) parent).expression = variableValues.getFirst().get(variableReference.name);
+                    }
+                }
+            }
+            evaluateExpression(child.getChildren(), child);
+        }
+    }
+
+    private void evaluateOperation(Expression parent) {
+        if(parent instanceof Operation) {
+            if(((Operation) parent).rhs instanceof VariableReference) {
+                VariableReference variableReference = (VariableReference) ((Operation) parent).rhs;
+                if(variableValues.getFirst().containsKey(variableReference.name)) {
+                    ((Operation) parent).rhs = variableValues.getFirst().get(variableReference.name);
+                }
+            }
+            if(((Operation) parent).rhs instanceof Operation) {
+                for(ASTNode node : ((Operation) parent).rhs.getChildren()) {
+                    evaluateOperation((Expression) node);
+                }
+            }
+        }
+    }
+
+    private Literal calculateOperation(Operation operation) {
+
+        if(operation instanceof MultiplyOperation) {
+            return calculateMultiplyOperation(operation.lhs, operation.rhs);
+        } else if(operation instanceof AddOperation) {
+            return calculateAddOperation(operation.lhs, operation.rhs);
+        } else if (operation instanceof SubtractOperation) {
+            return calculateSubtractOperation(operation.lhs, operation.rhs);
+        }
+        return null;
+    }
 
     /**
      * Executes a multiply operation
