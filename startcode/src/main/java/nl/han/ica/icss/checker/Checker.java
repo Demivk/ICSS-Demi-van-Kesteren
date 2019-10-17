@@ -17,26 +17,33 @@ public class Checker {
     public void check(AST ast) {
         variableTypes = new LinkedList<>();
         variableTypes.add(new HashMap<>());
-        // TODO findAllVariables hier ipv in methoden?
 
-        for(ASTNode node : ast.root.getChildren()) {
-            checkAllowedStyleAttributes(node);  // works
-            checkUndefinedVariables(node);      // works
-//            checkOperationsAreAllowed(node);    // does not work with variables (*) and multiple operands
-            checkNoColorsInOperation(node);     // works
-//            checkDeclarationValuesValid(node);  // does not work with operations with variables (maybe CH02 will fix this?)
-            checkIfConditionIsBoolean(node);    // works
-            checkNoBooleansInOperation(node);   // works
-        }
+        checkAST(ast.root);
+    }
+
+    private void checkAST(ASTNode node) {
+        findAllVariables(node);
+
+//        checkAllowedStyleAttributes(node);  // works
+//        checkUndefinedVariables(node);      // works
+////            checkOperationsAreAllowed(node);    // does not work with variables (*) and multiple operands
+//        checkNoColorsInOperation(node);     // works
+////            checkDeclarationValuesValid(node);  // does not work with operations with variables (maybe CH02 will fix this?)
+//        checkIfConditionIsBoolean(node);    // works
+//        checkNoBooleansInOperation(node);   // works
+
+        node.getChildren().forEach(this::checkAST);
     }
 
     // TODO optimaliseren: lijst maken van allowed attributes?
     /**
      * BP04
      * Eis: Alleen de stijlattributen color,background-color, width en height zijn toegestaan.
+     *
      * Checks if the property name is allowed,
      * else sets an error
-     * @param toBeChecked
+     *
+     * @param toBeChecked node to check
      */
     private void checkAllowedStyleAttributes(ASTNode toBeChecked) {
         if(toBeChecked.getChildren().size() != 1) {
@@ -54,42 +61,20 @@ public class Checker {
      * CH01
      * Eis: "Controleer of er geen variabelen worden gebruikt die niet gedefineerd zijn."
      *
-     * Checks if a variable gets a value,
+     * Checks if a variable exists in variableType,
      * else sets an error
-     * @param toBeChecked
+     *
+     * @param toBeChecked node to check
      */
     private void checkUndefinedVariables(ASTNode toBeChecked) {
         if(toBeChecked.getChildren().size() != 1) {
-            findAllVariables(toBeChecked);
-
-            if(toBeChecked instanceof Declaration) {
-                if(((Declaration) toBeChecked).expression instanceof VariableReference && !variableTypes.getFirst().containsKey(((VariableReference) ((Declaration)toBeChecked).expression).name)) {
-                    toBeChecked.setError("Unknown variable " + ((VariableReference) ((Declaration) toBeChecked).expression).name + " not defined.");
-                }
-            } else if(toBeChecked instanceof IfClause) {
-                if(((IfClause) toBeChecked).conditionalExpression instanceof VariableReference && !variableTypes.getFirst().containsKey(((VariableReference) ((IfClause) toBeChecked).conditionalExpression).name)) {
-                    toBeChecked.setError("Unknown variable " + ((VariableReference) ((IfClause) toBeChecked).conditionalExpression).name + " not defined.");
+            if(toBeChecked instanceof VariableReference) {
+                String name = ((VariableReference) toBeChecked).name;
+                if(!variableTypes.getFirst().containsKey(name)) {
+                    toBeChecked.setError("Unknown variable: " + name + " not defined.");
                 }
             }
-            toBeChecked.getChildren().forEach(this::checkUndefinedVariables);
         }
-
-//        if(toBeChecked.getChildren().size() != 1) {
-//            if(toBeChecked instanceof VariableReference) {
-//                String name = ((VariableReference) toBeChecked).name;
-//                boolean exists = false;
-//                for(HashMap<String, ExpressionType> h : variableTypes) {
-//                    if (h.containsKey(name)) {
-//                        exists = true;
-//                        break;
-//                    }
-//                }
-//                if(!exists) {
-//                    toBeChecked.setError("Variable " + ((VariableReference) toBeChecked).name + " not defined");
-//                }
-//            }
-//            toBeChecked.getChildren().forEach(this::checkUndefinedVariables);
-//        }
     }
 
     // TODO fix werkend met variabelen (lvl2 werkt niet met verschillende operands)
@@ -102,13 +87,14 @@ public class Checker {
      * Checks if add and subtract operations are done by the same operands,
      * checks if multiplying operations are done by scalaire operands,
      * else sets an error
-     * @param toBeChecked
+     *
+     * @param toBeChecked node to check
      */
     private void checkOperationsAreAllowed(ASTNode toBeChecked) {
         if(toBeChecked.getChildren().size() != 1) {
-            findAllVariables(toBeChecked);
-
             if(toBeChecked instanceof Operation) {
+                // if lhs operation
+                // if rhs operation
                 if(toBeChecked instanceof AddOperation || toBeChecked instanceof SubtractOperation) {
                     if(((Operation) toBeChecked).lhs instanceof VariableReference) {
                         if(variableTypes.getFirst().containsKey(((VariableReference) ((Operation) toBeChecked).lhs).name)) {
@@ -141,7 +127,6 @@ public class Checker {
                     }
                 }
             }
-            toBeChecked.getChildren().forEach(this::checkOperationsAreAllowed);
         }
     }
 
@@ -151,16 +136,26 @@ public class Checker {
      *
      * Checks if colors are not used in operations,
      * else sets an error
-     * @param toBeChecked
+     *
+     * @param toBeChecked node to check
      */
     private void checkNoColorsInOperation(ASTNode toBeChecked) {
         if(toBeChecked.getChildren().size() != 1) {
             if(toBeChecked instanceof Operation) {
+                if(((Operation) toBeChecked).lhs instanceof VariableReference) {
+                    if(variableTypes.getFirst().get(((VariableReference) ((Operation) toBeChecked).lhs).name) == ExpressionType.COLOR) {
+                        toBeChecked.setError("Operations cannot be performed with colors.");
+                    }
+                }
+                if(((Operation) toBeChecked).rhs instanceof VariableReference) {
+                    if(variableTypes.getFirst().get(((VariableReference) ((Operation) toBeChecked).rhs).name) == ExpressionType.COLOR) {
+                        toBeChecked.setError("Operations cannot be performed with colors.");
+                    }
+                }
                 if(((Operation) toBeChecked).lhs instanceof ColorLiteral || ((Operation) toBeChecked).rhs instanceof ColorLiteral) {
                     toBeChecked.setError("Operations cannot be performed with colors.");
                 }
             }
-            toBeChecked.getChildren().forEach(this::checkNoColorsInOperation);
         }
     }
 
@@ -172,13 +167,13 @@ public class Checker {
      *
      * Checks if a property gets the right (allowed) value,
      * else sets an error
-     * @param toBeChecked
+     *
+     * @param toBeChecked node to check
      */
     private void checkDeclarationValuesValid(ASTNode toBeChecked) {
         if(toBeChecked.getChildren().size() != 1) {
-            findAllVariables(toBeChecked);
-
             if(toBeChecked instanceof Declaration) {
+                // if expression operation
                 if(((Declaration) toBeChecked).property.name.equals("color") || ((Declaration) toBeChecked).property.name.equals("background-color")) {
                     if(((Declaration) toBeChecked).expression instanceof VariableReference) {
                         if(variableTypes.getFirst().containsKey(((VariableReference) ((Declaration) toBeChecked).expression).name)) {
@@ -202,7 +197,7 @@ public class Checker {
                     }
                 }
             }
-            toBeChecked.getChildren().forEach(this::checkDeclarationValuesValid);
+            //toBeChecked.getChildren().forEach(this::checkDeclarationValuesValid);
         }
     }
 
@@ -210,12 +205,14 @@ public class Checker {
      * CH05
      * Eis: "Controleer of de conditie bij een if-statement van het type boolean is
      * (zowel bij een variabele-referentie als een boolean literal)."
-     * @param toBeChecked
+     *
+     * Checks if the condition is a boolean,
+     * else sets an error
+     *
+     * @param toBeChecked node to check
      */
     private void checkIfConditionIsBoolean(ASTNode toBeChecked) {
         if (toBeChecked.getChildren().size() != 1) {
-            findAllVariables(toBeChecked);
-
             if (toBeChecked instanceof IfClause) {
                 if (((IfClause) toBeChecked).getConditionalExpression() instanceof VariableReference) {
                     if (variableTypes.getFirst().containsKey(((VariableReference) ((IfClause) toBeChecked).getConditionalExpression()).name)) {
@@ -227,7 +224,6 @@ public class Checker {
                     toBeChecked.setError("If-statement requires a boolean expression.");
                 }
             }
-            toBeChecked.getChildren().forEach(this::checkIfConditionIsBoolean);
         }
     }
 
@@ -235,26 +231,37 @@ public class Checker {
      * EU01
      * Eigen eis: "Controleer of er geen booleans worden gebruikt in operaties (plus, min en keer)"
      * Lijkt op CH03
+     *
      * Checks if booleans are not used in operations,
      * else sets an error
-     * @param toBeChecked
+     *
+     * @param toBeChecked node to check
      */
     private void checkNoBooleansInOperation(ASTNode toBeChecked) {
         if(toBeChecked.getChildren().size() != 1) {
             if(toBeChecked instanceof Operation) {
+                if(((Operation) toBeChecked).lhs instanceof VariableReference) {
+                    if(variableTypes.getFirst().get(((VariableReference) ((Operation) toBeChecked).lhs).name) == ExpressionType.BOOL) {
+                        toBeChecked.setError("Operations cannot be performed with booleans.");
+                    }
+                }
+                if(((Operation) toBeChecked).rhs instanceof VariableReference) {
+                    if(variableTypes.getFirst().get(((VariableReference) ((Operation) toBeChecked).rhs).name) == ExpressionType.BOOL) {
+                        toBeChecked.setError("Operations cannot be performed with booleans.");
+                    }
+                }
                 if(((Operation) toBeChecked).lhs instanceof BoolLiteral || ((Operation) toBeChecked).rhs instanceof BoolLiteral) {
                     toBeChecked.setError("Operations cannot be performed with booleans.");
                 }
             }
-            toBeChecked.getChildren().forEach(this::checkNoBooleansInOperation);
         }
     }
 
-    // TODO resolveExpressionType weghalen? -> fixen andere methoden
     /**
      * Looks up all the Variable Assignments and puts the reference and expression
      * in the hashmap variableTypes
-     * @param toBeFound
+     *
+     * @param toBeFound node to check
      */
     private void findAllVariables(ASTNode toBeFound) {
         if (toBeFound instanceof VariableAssignment) {
@@ -267,8 +274,9 @@ public class Checker {
 
     /**
      * Returns the ExpressionType (type of literal) of the given expression.
-     * @param expression
-     * @return ExpressionType or null
+     *
+     * @param expression expression to check
+     * @return ExpressionType or UNDEFINED
      */
     private ExpressionType resolveExpressionType(Expression expression) {
         if(expression instanceof BoolLiteral) {
@@ -282,9 +290,7 @@ public class Checker {
         } else if(expression instanceof ScalarLiteral) {
             return ExpressionType.SCALAR;
         } else {
-            return null;
+            return ExpressionType.UNDEFINED;
         }
     }
-
-
 }
