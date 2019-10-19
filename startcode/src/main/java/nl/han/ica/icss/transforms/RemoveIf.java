@@ -100,7 +100,7 @@ public class RemoveIf implements Transform {
             int index = stylerule.body.indexOf(ifClause);
             stylerule.body.remove(index);
         } else {
-            parent.removeChild(ifClause); // TODO komt ie noooooit in haal maar weg
+            parent.removeChild(ifClause);
         }
     }
 
