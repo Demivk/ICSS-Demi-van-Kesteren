@@ -36,6 +36,7 @@ PLUS: '+';
 MIN: '-';
 MUL: '*';
 ASSIGNMENT_OPERATOR: ':=';
+COMMA: ',';
 
 //--- PARSER: ---
 // Stylesheet
@@ -46,7 +47,7 @@ variableAssignment: variableReference ASSIGNMENT_OPERATOR expression SEMICOLON;
 variableReference: CAPITAL_IDENT;
 
 // Stylerule
-stylerule: selector OPEN_BRACE scope CLOSE_BRACE;
+stylerule: selector OPEN_BRACE scope CLOSE_BRACE; // selector+ ?
 scope: body+;
 body: declaration | ifClause | variableAssignment;
 
