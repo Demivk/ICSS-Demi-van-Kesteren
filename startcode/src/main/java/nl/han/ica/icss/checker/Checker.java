@@ -17,17 +17,22 @@ public class Checker {
     public void check(AST ast) {
         variableTypes = new LinkedList<>();
         variableTypes.add(new HashMap<>());
-        findAllVariables(ast.root);
 
+        findAllVariables(ast.root);
         checkAST(ast.root);
     }
 
+    /**
+     * Executes all check methods
+     *
+     * @param node node to start checking
+     */
     private void checkAST(ASTNode node) {
         checkAllowedStyleAttributes(node);  // works
         checkUndefinedVariables(node);      // works
-////            checkOperationsAreAllowed(node);    // does not work with variables (*) and multiple operands
+//            checkOperationsAreAllowed(node);    // does not work with variables (*) and multiple operands
         checkNoColorsInOperation(node);     // works
-////            checkDeclarationValuesValid(node);  // does not work with operations with variables (maybe CH02 will fix this?)
+//            checkDeclarationValuesValid(node);  // does not work with operations with variables (maybe CH02 will fix this?)
         checkIfConditionIsBoolean(node);    // works
         checkNoBooleansInOperation(node);   // works
 
@@ -196,7 +201,6 @@ public class Checker {
                     }
                 }
             }
-            //toBeChecked.getChildren().forEach(this::checkDeclarationValuesValid);
         }
     }
 
