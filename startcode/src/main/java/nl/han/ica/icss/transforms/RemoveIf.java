@@ -49,7 +49,7 @@ public class RemoveIf implements Transform {
         List<ASTNode> values = new ArrayList<>();
 
         if(ifClause.conditionalExpression instanceof BoolLiteral || ifClause.conditionalExpression instanceof VariableReference) {
-            if (getBoolean(ifClause.conditionalExpression).value) {
+            if (getBoolLiteral(ifClause.conditionalExpression).value) {
                 for (ASTNode node : ifClause.body) {
                     if (node instanceof IfClause) {
                         values.addAll(evaluateIfClause((IfClause) node, ifClause));
@@ -75,7 +75,7 @@ public class RemoveIf implements Transform {
      * @param node node to get the value from
      * @return value of the node or null
      */
-    private BoolLiteral getBoolean(ASTNode node) {
+    private BoolLiteral getBoolLiteral(ASTNode node) {
         if(node instanceof BoolLiteral) {
             return (BoolLiteral) node;
         }
@@ -100,7 +100,7 @@ public class RemoveIf implements Transform {
             int index = stylerule.body.indexOf(ifClause);
             stylerule.body.remove(index);
         } else {
-            parent.removeChild(ifClause);
+            parent.removeChild(ifClause); // TODO komt ie noooooit in haal maar weg
         }
     }
 
