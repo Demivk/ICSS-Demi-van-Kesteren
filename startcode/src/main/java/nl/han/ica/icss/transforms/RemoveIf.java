@@ -97,8 +97,7 @@ public class RemoveIf implements Transform {
     private void removeIfClause(IfClause ifClause, ASTNode parent) {
         if(parent instanceof Stylerule) {
             Stylerule stylerule = (Stylerule) parent;
-            int index = stylerule.body.indexOf(ifClause);
-            stylerule.body.remove(index);
+            stylerule.body.remove(ifClause);
         } else {
             parent.removeChild(ifClause);
         }
