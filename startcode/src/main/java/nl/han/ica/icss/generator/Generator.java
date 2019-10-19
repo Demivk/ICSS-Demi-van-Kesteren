@@ -14,7 +14,7 @@ public class Generator {
 
     private StringBuilder stringBuilder;
     private LinkedList<HashMap<String,Expression>> variables;
-    
+
 	public String generate(AST ast) {
         variables = new LinkedList<>();
         variables.add(new HashMap<>());

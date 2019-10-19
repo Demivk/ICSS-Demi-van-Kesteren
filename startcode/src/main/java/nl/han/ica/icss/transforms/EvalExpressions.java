@@ -22,8 +22,8 @@ public class EvalExpressions implements Transform {
     public void apply(AST ast) {
         variableValues = new LinkedList<>();
         variableValues.add(new HashMap<>());
-        findAllVariables(ast.root);
 
+        findAllVariables(ast.root);
         evaluateExpression(ast.root.getChildren(), ast.root);
     }
 
