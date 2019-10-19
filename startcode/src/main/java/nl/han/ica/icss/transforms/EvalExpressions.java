@@ -27,288 +27,20 @@ public class EvalExpressions implements Transform {
         evaluateExpression(ast.root.getChildren(), ast.root);
     }
 
-//    // TODO fix parent.removeChild en parent.addChild
-//    private void evaluateExpression(ASTNode node, ASTNode parent) {
-//        if (node instanceof Expression) {
-//            Expression expression = (Expression) node;
-//            if (node instanceof Operation) {
-//                Operation operation = (Operation) expression;
-//                if (operation.lhs instanceof Operation) {
-//                    evaluateExpression(operation.lhs, node);
-//                    return;
-//                }
-//                if (operation.rhs instanceof Operation) {
-//                    evaluateExpression(operation.rhs, node);
-//                    return;
-//                }
-//
-//                if (operation.lhs instanceof VariableReference) {
-//                    operation.lhs = variableValues.getFirst().get(((VariableReference) operation.lhs).name);
-//                    evaluateExpression(operation, parent);
-//                    return;
-//                }
-//                if (operation.rhs instanceof VariableReference) {
-//                    operation.rhs = variableValues.getFirst().get(((VariableReference) operation.rhs).name);
-//                    evaluateExpression(operation, parent);
-//                }
-//
-//                Literal literal = calculateOperation(operation);
-//                if(literal != null) {
-//                    // Hier gaat het mis!
-//                    System.out.println(parent.getClass());
-//                    parent.removeChild(node);
-//                    parent.addChild(literal);
-//                    //replace(parent, node, literal)?
-//
-//                    if (parent instanceof VariableAssignment) {
-//                        variableValues.getFirst().remove(((VariableAssignment) parent).name.name);
-//                        variableValues.getFirst().put(((VariableAssignment) parent).name.name, literal);
-//                    }
-//                    return;
-//                }
-//            }
-//            if (expression instanceof VariableReference) {
-//                VariableReference variableReference = (VariableReference) expression;
-//                parent.removeChild(variableReference);
-//                Literal literal = variableValues.getFirst().get(variableReference.name);
-//                parent.addChild(literal);
-//            }
-//        }
-//        for (ASTNode nodes : node.getChildren()) {
-//            evaluateExpression(nodes, node);
-//        }
-//    }
-//
-//
-//    // --- Poging 8000 --- \\
-////    private void evaluateOperation(Operation node, ASTNode parent) {
-////        Expression value = null;
-////
-////        if(node.lhs instanceof VariableReference) {
-////            VariableReference variableReference = (VariableReference) node.lhs;
-////            node.lhs = variableValues.getFirst().get(variableReference.name);
-////        }
-////        if(node.rhs instanceof VariableReference) {
-////            VariableReference variableReference = (VariableReference) node.rhs;
-////            node.rhs = variableValues.getFirst().get(variableReference.name);
-////        }
-////
-////        if(node instanceof MultiplyOperation) {
-////            if(node.rhs instanceof MultiplyOperation) {
-////                evaluateOperation((MultiplyOperation) node.rhs, node);
-////            }
-////            value = calculateMultiplyOperation(node.lhs, node.rhs);
-////            if(node.rhs instanceof MultiplyOperation) {
-////                evaluateOperation((Operation) value, parent);
-////            }
-////        }
-////
-////        if(node instanceof AddOperation) {
-////            if(node.rhs instanceof MultiplyOperation) {
-////                evaluateOperation((MultiplyOperation) node.rhs, node);
-////            }
-////            value = calculateAddOperation(node.lhs, node.rhs);
-////        }
-////
-////        if(node instanceof SubtractOperation) {
-////            if(node.rhs instanceof MultiplyOperation) {
-////                evaluateOperation((MultiplyOperation) node.rhs, node);
-////            }
-////            value = calculateSubtractOperation(node.lhs, node.rhs);
-////        }
-////
-////        if(node.rhs instanceof Operation) {
-////            evaluateOperation(node, parent);
-////        }
-////        if(value instanceof Operation) {
-////            evaluateOperation((Operation) value, parent);
-////        } else {
-////            replaceValue(parent, value);
-////        }
-////    }
-//    //
-//
-//
-////    private void evaluateExpression(List<ASTNode> nodes, ASTNode parent) {
-////        for (ASTNode node : nodes) {
-////            if (node instanceof Expression) {
-////                Expression expression = (Expression) node;
-////                if (expression instanceof VariableReference) {
-////                    VariableReference variableReference = (VariableReference) expression;
-////                    parent.removeChild(variableReference);
-////                    Literal literal = variableValues.getFirst().get(variableReference.name);
-////                    parent.addChild(literal);
-////                } else if (expression instanceof Operation) {
-////                    Operation operation = (Operation) expression;
-////                    evaluateOperation(operation, parent);
-////                }
-////            }
-////            evaluateExpression(node.getChildren(), node);
-////        }
-////    }
-//
-////    private void evaluateOperation(Operation operation, ASTNode parent) {
-////        if (operation.lhs instanceof Operation) {
-////            Operation operationLhs = (Operation) operation.lhs;
-////            evaluateOperation(operationLhs, operation); //
-////        }
-////        if (operation.rhs instanceof Operation) {
-////            Operation operationRhs = (Operation) operation.rhs;
-////            evaluateOperation(operationRhs, operation); // operation, parent
-////        }
-////
-////        if (operation.lhs instanceof VariableReference) {
-////            VariableReference variableReference = (VariableReference) operation.lhs;
-////            operation.lhs = variableValues.getFirst().get(variableReference.name);
-////        }
-////        if (operation.rhs instanceof VariableReference) {
-////            VariableReference variableReference = (VariableReference) operation.rhs;
-////            operation.rhs = variableValues.getFirst().get(variableReference.name);
-////        }
-////
-////        // Bij height: Height + 2px * 10; wordt addChild niet goed uitgevoerd: multiply wordt niet pixel(20)
-////        // Literal value is not saved! Continues with multiply operation instead of pixel(20)
-////
-//////        System.out.println("Operation: \n" + operation + "\n");
-//////        System.out.println("IF INSTANCE OF: \nParent " + parent + " children: " + parent.getChildren() + "\n");
-////        parent.removeChild(operation);
-//////        System.out.println("AFTER REMOVE: \nParent " + parent + " children: " + parent.getChildren() + "\n");
-////        Literal literal = calculateOperation(operation, operation.lhs, operation.rhs);
-//////        System.out.println("Literal: \n" + literal + "\n");
-////        parent.addChild(literal);
-//////        System.out.println("AFTER ADD CHILD: \nParent " + parent + " children: " + parent.getChildren() + "\n");
-//////        System.out.println("-=-=-=-=-=-");
-////
-//////        if(operation instanceof MultiplyOperation || operation instanceof AddOperation || operation instanceof SubtractOperation) {
-//////
-//////        }
-////    }
-// // --- end of poging 8000 --- \\
-//
-//    /**
-//     * Executes an operation based on the operation type
-//     *
-//     * @param operation operation type
-//     * @return result of an operation
-//     */
-//    private Literal calculateOperation(Operation operation) {
-//        // Wellicht overbodig?
-//        if(operation.lhs instanceof Operation) {
-//            operation.lhs = calculateOperation((Operation) operation.lhs);
-//        }
-//        if(operation.rhs instanceof Operation) {
-//            operation.rhs = calculateOperation((Operation) operation.rhs);
-//        }
-//
-//        if (operation instanceof MultiplyOperation) {
-//            return calculateMultiplyOperation(operation.lhs, operation.rhs);
-//        } else if (operation instanceof AddOperation) {
-//            return calculateAddOperation(operation.lhs, operation.rhs);
-//        } else if (operation instanceof SubtractOperation) {
-//            return calculateSubtractOperation(operation.lhs, operation.rhs);
-//        }
-//        return null;
-//    }
-
-    /*---*/
-
-//    private void evaluateExpression(ASTNode node) {
-//        if(node instanceof Declaration) {
-//            calculateDeclaration((Declaration) node);
-//        }
-//        if (node instanceof VariableAssignment) {
-//            String name = ((VariableAssignment) node).name.name;
-//            Literal literal = calculateExpression(((VariableAssignment) node).expression);
-//            variableValues.getLast().put(name, literal); // getLast() ?
-//            ((VariableAssignment) node).expression = literal;
-//        }
-//
-//        for(ASTNode child : node.getChildren()) {
-//            evaluateExpression(child);
-//        }
-//    }
-//
-//    private void calculateDeclaration(Declaration declaration) {
-//        declaration.expression = calculateExpression(declaration.expression);
-//    }
-//
-//    private Literal calculateExpression(Expression expression) {
-//        if (expression instanceof Operation) {
-//            return calculateOperation((Operation) expression);
-//        }
-//        if (expression instanceof VariableReference) {
-//            Literal literal = null;
-//            if(variableValues.getFirst().containsKey(((VariableReference) expression).name)) {
-//                literal = variableValues.getFirst().get(((VariableReference) expression).name);
-//            }
-//            return literal;
-//        }
-//        return null;
-//    }
-//
-//    private Literal calculateOperation(Operation operation) {
-//        Literal left = calculateExpression(operation.lhs);
-//        Literal right = calculateExpression(operation.rhs);
-//
-//        if(operation instanceof MultiplyOperation) {
-//            return calculateMultiplyOperation(left, right);
-//        } else if(operation instanceof AddOperation) {
-//            return calculateAddOperation(left, right);
-//        } else if(operation instanceof SubtractOperation) {
-//            return calculateSubtractOperation(left, right);
-//        }
-//        return null;
-//    }
-
-    /*---*/
-
-
-    // dit ergens dumpen?
-    /*
-    Literal literal = calculateOperation(child);
-                if(literal != null) {
-                    parent.removeChild(child);
-                    parent.addChild(literal);
-
-//                    if (parent instanceof VariableAssignment) {
-//                        variableValues.getFirst().remove(((VariableAssignment) parent).name.name);
-//                        variableValues.getFirst().put(((VariableAssignment) parent).name.name, literal);
-//                    }
-//                    return;
-}
+    /**
+     * For every child, decides the type of the parent,
+     * then checks if the child is an Operation (then sets the parent's expression to calculateExpression(child))
+     * or if the child is a VariableReference (sets the parent's expression to the value if exists)
+     *
+     * @param children children of the parent
+     * @param parent node to evaluate
      */
-
     private void evaluateExpression(ArrayList<ASTNode> children, ASTNode parent) {
         for(ASTNode child : children) {
-            if(parent instanceof Declaration) { // Expression = operation, variable reference of literal
+            if(parent instanceof Declaration) {
                 Declaration declaration = (Declaration) parent;
                 if(child instanceof Operation) {
                     declaration.expression = calculateExpression((Expression) child);
-                    //evaluateOperation((Operation) child);
-//                    Operation operation = (Operation) child;
-//                    if(operation.lhs instanceof VariableReference) {
-//                        VariableReference variableReference = (VariableReference) operation.lhs;
-//                        if(variableValues.getFirst().containsKey(variableReference.name)) {
-//                            operation.lhs = variableValues.getFirst().get(variableReference.name);
-//                        }
-//                    }
-//                    if(operation.rhs instanceof VariableReference) {
-//                        VariableReference variableReference = (VariableReference) operation.rhs;
-//                        if(variableValues.getFirst().containsKey(variableReference.name)) {
-//                            operation.rhs = variableValues.getFirst().get(variableReference.name);
-//                        }
-//                    }
-//                    if(operation.lhs instanceof Operation) {
-//                        //operation.lhs = calculateOperation((Operation) operation.lhs);
-//                        evaluateExpression(operation.lhs.getChildren(), operation.lhs);
-//                    }
-//                    if(operation.rhs instanceof Operation) {
-//                        //operation.rhs = calculateOperation((Operation) operation.rhs);
-//                        evaluateExpression(operation.rhs.getChildren(), operation.rhs);
-//                    }
-//                    Literal literal = calculateOperation(operation);
-//                    parent.removeChild(child);
-//                    parent.addChild(literal);
                 }
                 if(child instanceof VariableReference) {
                     VariableReference variableReference = (VariableReference) child;
@@ -316,12 +48,21 @@ public class EvalExpressions implements Transform {
                         ((Declaration) parent).expression = variableValues.getFirst().get(variableReference.name);
                     }
                 }
-                // Literal = o.k.
             }
             evaluateExpression(child.getChildren(), child);
         }
     }
 
+    /**
+     * Decides the type of expression,
+     * returns the retrieved variable value if the expression is a VariableReference,
+     * returns the solution of the expression if it is an Operation
+     * returns the expression if it is a Literal
+     * or returns null
+     *
+     * @param expression expression to calculate
+     * @return value of VariableReference, solution of Operation, Literal or null
+     */
     private Literal calculateExpression(Expression expression) {
         if(expression instanceof VariableReference) {
             if(variableValues.getFirst().containsKey(((VariableReference) expression).name)) {
@@ -337,47 +78,10 @@ public class EvalExpressions implements Transform {
         return null;
     }
 
-//    private void evaluateOperation(Operation operation) {
-//        if(operation.lhs instanceof VariableReference) {
-//            VariableReference variableReference = (VariableReference) operation.lhs;
-//            if(variableValues.getFirst().containsKey(variableReference.name)) {
-//                operation.lhs = variableValues.getFirst().get(variableReference.name);
-//            }
-//        }
-//        if(operation.rhs instanceof VariableReference) {
-//            VariableReference variableReference = (VariableReference) operation.rhs;
-//            if(variableValues.getFirst().containsKey(variableReference.name)) {
-//                operation.rhs = variableValues.getFirst().get(variableReference.name);
-//            }
-//        }
-//        if(operation.lhs instanceof Operation) {
-//            //operation.lhs = calculateOperation((Operation) operation.lhs);
-//            evaluateOperation((Operation) operation.lhs);
-//        }
-//        if(operation.rhs instanceof Operation) {
-//            //operation.rhs = calculateOperation((Operation) operation.rhs);
-//            evaluateOperation((Operation) operation.rhs);
-//        }
-//        Literal literal = calculateOperation(operation);
-////        operation = calculateOperation(operation);
-//
-////        if(expression instanceof Operation) {
-////            if(((Operation) expression).rhs instanceof VariableReference) {
-////                VariableReference variableReference = (VariableReference) ((Operation) expression).rhs;
-////                if(variableValues.getFirst().containsKey(variableReference.name)) {
-////                    ((Operation) expression).rhs = variableValues.getFirst().get(variableReference.name);
-////                }
-////            }
-////            if(((Operation) expression).rhs instanceof Operation) {
-////                for(ASTNode node : ((Operation) expression).rhs.getChildren()) {
-////                    evaluateOperation((Expression) node);
-////                }
-////            }
-////        }
-//    }
-
     /**
-     * Decides the type of calculation and
+     * Sets the left and right part of the operation to a
+     * literal using calculateExpression(Expression expression),
+     * decides the type of calculation and
      * returns the result of the calculation
      *
      * @param operation operation to solve
@@ -452,7 +156,6 @@ public class EvalExpressions implements Transform {
             int result = ((ScalarLiteral) exLeft).value + ((ScalarLiteral) exRight).value;
             return new ScalarLiteral(result);
         }
-        // Scalar?
         return null;
     }
 
@@ -480,9 +183,9 @@ public class EvalExpressions implements Transform {
     }
 
     /**
-     * [...]
+     * Adds the variable name and the retrieved value to the hashmap.
      *
-     * @param toBeFound node to find
+     * @param toBeFound VariableAssignment to find
      */
     private void findAllVariables(ASTNode toBeFound) {
         if (toBeFound instanceof VariableAssignment) {
