@@ -24,13 +24,13 @@ public class Checker {
     private void checkAST(ASTNode node) {
         findAllVariables(node);
 
-//        checkAllowedStyleAttributes(node);  // works
-//        checkUndefinedVariables(node);      // works
+        checkAllowedStyleAttributes(node);  // works
+        checkUndefinedVariables(node);      // works
 ////            checkOperationsAreAllowed(node);    // does not work with variables (*) and multiple operands
-//        checkNoColorsInOperation(node);     // works
+        checkNoColorsInOperation(node);     // works
 ////            checkDeclarationValuesValid(node);  // does not work with operations with variables (maybe CH02 will fix this?)
-//        checkIfConditionIsBoolean(node);    // works
-//        checkNoBooleansInOperation(node);   // works
+        checkIfConditionIsBoolean(node);    // works
+        checkNoBooleansInOperation(node);   // works
 
         node.getChildren().forEach(this::checkAST);
     }
