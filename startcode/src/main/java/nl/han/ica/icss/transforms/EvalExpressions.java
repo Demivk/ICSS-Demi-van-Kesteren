@@ -193,6 +193,9 @@ public class EvalExpressions implements Transform {
             Literal literal = null;
 
             Expression expression = ((VariableAssignment) toBeFound).expression;
+//            if(expression instanceof Literal) {
+//                literal = (Literal) expression;
+//            }
             if (expression instanceof BoolLiteral) {
                 literal = new BoolLiteral(((BoolLiteral) expression).value);
             } else if (expression instanceof ColorLiteral) {
