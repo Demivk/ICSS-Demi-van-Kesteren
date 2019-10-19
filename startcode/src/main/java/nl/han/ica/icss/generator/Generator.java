@@ -12,16 +12,18 @@ import java.util.LinkedList;
 
 public class Generator {
 
-    private String result = "";
+    private StringBuilder stringBuilder;
     private LinkedList<HashMap<String,Expression>> variables;
-
+    
 	public String generate(AST ast) {
         variables = new LinkedList<>();
         variables.add(new HashMap<>());
-        findAllVariables(ast.root);
+        stringBuilder = new StringBuilder();
 
+        findAllVariables(ast.root);
 	    generateResult(ast.root);
-        return result + "}";
+
+        return stringBuilder.toString() + "}";
 	}
 
     /**
@@ -32,8 +34,8 @@ public class Generator {
      */
 	private void generateResult(ASTNode node) {
 	    if(node instanceof Selector) {
-            if(result.endsWith(";\n")) {
-                result += "}\n\n";
+            if(stringBuilder.toString().endsWith(";\n")) {
+                stringBuilder.append("}\n\n");
             }
 	        generateSelectorResult((Selector) node);
         }
@@ -49,13 +51,13 @@ public class Generator {
      */
     private void generateSelectorResult(Selector selector) {
 	    if(selector instanceof ClassSelector) {
-	        result += ((ClassSelector) selector).cls + " {";
+	        stringBuilder.append(((ClassSelector) selector).cls).append(" {");
         } else if(selector instanceof IdSelector) {
-	        result += ((IdSelector) selector).id + " {";
+	        stringBuilder.append(((IdSelector) selector).id).append(" {");
         } else if(selector instanceof TagSelector) {
-	        result += ((TagSelector) selector).tag + " {";
+	        stringBuilder.append(((TagSelector) selector).tag).append(" {");
         }
-	    result += "\n";
+	    stringBuilder.append("\n");
     }
 
     /**
@@ -77,7 +79,7 @@ public class Generator {
     private void generateDeclarationResult(ArrayList<ASTNode> nodes) {
 	    for(ASTNode node : nodes) {
             if (node instanceof PropertyName) {
-                result += "\t" + ((PropertyName) node).name + ": ";
+                stringBuilder.append("\t").append(((PropertyName) node).name).append(": ");
             }
             if (node instanceof Expression) {
                 generateLiteralResult(node);
@@ -86,7 +88,7 @@ public class Generator {
                 generateVariableValueByName(node);
             }
         }
-        result += ";\n";
+        stringBuilder.append(";\n");
     }
 
     /**
@@ -96,15 +98,15 @@ public class Generator {
      */
     private void generateLiteralResult(ASTNode node) {
 	    if(node instanceof BoolLiteral) {
-	        result += ((BoolLiteral) node).value;
+	        stringBuilder.append(((BoolLiteral) node).value);
         } else if(node instanceof ColorLiteral) {
-            result += ((ColorLiteral) node).value;
+            stringBuilder.append(((ColorLiteral) node).value);
         } else if(node instanceof PercentageLiteral) {
-	        result += ((PercentageLiteral) node).value + "%";
+	        stringBuilder.append(((PercentageLiteral) node).value).append("%");
         } else if(node instanceof PixelLiteral) {
-	        result += ((PixelLiteral) node).value + "px";
+	        stringBuilder.append(((PixelLiteral) node).value).append("px");
         } else if(node instanceof ScalarLiteral) {
-	        result += ((ScalarLiteral) node).value;
+	        stringBuilder.append(((ScalarLiteral) node).value);
         }
     }
 
