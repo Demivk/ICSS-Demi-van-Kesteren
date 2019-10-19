@@ -189,23 +189,13 @@ public class EvalExpressions implements Transform {
      */
     private void findAllVariables(ASTNode toBeFound) {
         if (toBeFound instanceof VariableAssignment) {
-            String name = ((VariableAssignment) toBeFound).name.name;
-            Literal literal = null;
+            VariableAssignment variableAssignment = (VariableAssignment) toBeFound;
+            String name = variableAssignment.name.name;
+            Expression expression = variableAssignment.expression;
 
-            Expression expression = ((VariableAssignment) toBeFound).expression;
-//            if(expression instanceof Literal) {
-//                literal = (Literal) expression;
-//            }
-            if (expression instanceof BoolLiteral) {
-                literal = new BoolLiteral(((BoolLiteral) expression).value);
-            } else if (expression instanceof ColorLiteral) {
-                literal = new ColorLiteral(((ColorLiteral) expression).value);
-            } else if (expression instanceof PercentageLiteral) {
-                literal = new PercentageLiteral(((PercentageLiteral) expression).value);
-            } else if (expression instanceof PixelLiteral) {
-                literal = new PixelLiteral(((PixelLiteral) expression).value);
-            } else if (expression instanceof ScalarLiteral) {
-                literal = new ScalarLiteral(((ScalarLiteral) expression).value);
+            Literal literal = null;
+            if(expression instanceof Literal) {
+                literal = (Literal) expression;
             }
             variableValues.getFirst().put(name, literal);
         }
