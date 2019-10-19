@@ -281,32 +281,34 @@ public class EvalExpressions implements Transform {
     private void evaluateExpression(ArrayList<ASTNode> children, ASTNode parent) {
         for(ASTNode child : children) {
             if(parent instanceof Declaration) { // Expression = operation, variable reference of literal
+                Declaration declaration = (Declaration) parent;
                 if(child instanceof Operation) {
+                    declaration.expression = calculateExpression((Expression) child);
                     //evaluateOperation((Operation) child);
-                    Operation operation = (Operation) child;
-                    if(operation.lhs instanceof VariableReference) {
-                        VariableReference variableReference = (VariableReference) operation.lhs;
-                        if(variableValues.getFirst().containsKey(variableReference.name)) {
-                            operation.lhs = variableValues.getFirst().get(variableReference.name);
-                        }
-                    }
-                    if(operation.rhs instanceof VariableReference) {
-                        VariableReference variableReference = (VariableReference) operation.rhs;
-                        if(variableValues.getFirst().containsKey(variableReference.name)) {
-                            operation.rhs = variableValues.getFirst().get(variableReference.name);
-                        }
-                    }
-                    if(operation.lhs instanceof Operation) {
-                        //operation.lhs = calculateOperation((Operation) operation.lhs);
-                        evaluateExpression(operation.lhs.getChildren(), operation.lhs);
-                    }
-                    if(operation.rhs instanceof Operation) {
-                        //operation.rhs = calculateOperation((Operation) operation.rhs);
-                        evaluateExpression(operation.rhs.getChildren(), operation.rhs);
-                    }
-                    Literal literal = calculateOperation(operation);
-                    parent.removeChild(child);
-                    parent.addChild(literal);
+//                    Operation operation = (Operation) child;
+//                    if(operation.lhs instanceof VariableReference) {
+//                        VariableReference variableReference = (VariableReference) operation.lhs;
+//                        if(variableValues.getFirst().containsKey(variableReference.name)) {
+//                            operation.lhs = variableValues.getFirst().get(variableReference.name);
+//                        }
+//                    }
+//                    if(operation.rhs instanceof VariableReference) {
+//                        VariableReference variableReference = (VariableReference) operation.rhs;
+//                        if(variableValues.getFirst().containsKey(variableReference.name)) {
+//                            operation.rhs = variableValues.getFirst().get(variableReference.name);
+//                        }
+//                    }
+//                    if(operation.lhs instanceof Operation) {
+//                        //operation.lhs = calculateOperation((Operation) operation.lhs);
+//                        evaluateExpression(operation.lhs.getChildren(), operation.lhs);
+//                    }
+//                    if(operation.rhs instanceof Operation) {
+//                        //operation.rhs = calculateOperation((Operation) operation.rhs);
+//                        evaluateExpression(operation.rhs.getChildren(), operation.rhs);
+//                    }
+//                    Literal literal = calculateOperation(operation);
+//                    parent.removeChild(child);
+//                    parent.addChild(literal);
                 }
                 if(child instanceof VariableReference) {
                     VariableReference variableReference = (VariableReference) child;
@@ -318,6 +320,21 @@ public class EvalExpressions implements Transform {
             }
             evaluateExpression(child.getChildren(), child);
         }
+    }
+
+    private Literal calculateExpression(Expression expression) {
+        if(expression instanceof VariableReference) {
+            if(variableValues.getFirst().containsKey(((VariableReference) expression).name)) {
+                return variableValues.getFirst().get(((VariableReference) expression).name);
+            }
+        }
+        if(expression instanceof Operation) {
+            return calculateOperation((Operation) expression);
+        }
+        if(expression instanceof Literal) {
+            return (Literal) expression;
+        }
+        return null;
     }
 
 //    private void evaluateOperation(Operation operation) {
@@ -367,12 +384,15 @@ public class EvalExpressions implements Transform {
      * @return literal with calculated value
      */
     private Literal calculateOperation(Operation operation) {
+        Literal left = calculateExpression(operation.lhs);
+        Literal right = calculateExpression(operation.rhs);
+
         if(operation instanceof MultiplyOperation) {
-            return calculateMultiplyOperation(operation.lhs, operation.rhs);
+            return calculateMultiplyOperation(left, right);
         } else if(operation instanceof AddOperation) {
-            return calculateAddOperation(operation.lhs, operation.rhs);
+            return calculateAddOperation(left, right);
         } else if (operation instanceof SubtractOperation) {
-            return calculateSubtractOperation(operation.lhs, operation.rhs);
+            return calculateSubtractOperation(left, right);
         }
         return null;
     }
