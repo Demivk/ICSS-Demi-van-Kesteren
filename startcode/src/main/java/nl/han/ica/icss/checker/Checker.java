@@ -17,13 +17,12 @@ public class Checker {
     public void check(AST ast) {
         variableTypes = new LinkedList<>();
         variableTypes.add(new HashMap<>());
+        findAllVariables(ast.root);
 
         checkAST(ast.root);
     }
 
     private void checkAST(ASTNode node) {
-        findAllVariables(node);
-
         checkAllowedStyleAttributes(node);  // works
         checkUndefinedVariables(node);      // works
 ////            checkOperationsAreAllowed(node);    // does not work with variables (*) and multiple operands
