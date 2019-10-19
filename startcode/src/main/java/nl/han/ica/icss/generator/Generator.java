@@ -93,20 +93,18 @@ public class Generator {
 
     /**
      * Adds the literal value to the final result
+     * Because BoolLiteral and ScalarLiteral are not used
+     * in the final CSS file, they are not included
      *
      * @param node node to get the value from
      */
     private void generateLiteralResult(ASTNode node) {
-	    if(node instanceof BoolLiteral) {
-	        stringBuilder.append(((BoolLiteral) node).value);
-        } else if(node instanceof ColorLiteral) {
+	    if(node instanceof ColorLiteral) {
             stringBuilder.append(((ColorLiteral) node).value);
         } else if(node instanceof PercentageLiteral) {
 	        stringBuilder.append(((PercentageLiteral) node).value).append("%");
         } else if(node instanceof PixelLiteral) {
 	        stringBuilder.append(((PixelLiteral) node).value).append("px");
-        } else if(node instanceof ScalarLiteral) {
-	        stringBuilder.append(((ScalarLiteral) node).value);
         }
     }
 
