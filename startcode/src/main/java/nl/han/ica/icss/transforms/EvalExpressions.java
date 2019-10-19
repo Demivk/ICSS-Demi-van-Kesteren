@@ -183,7 +183,7 @@ public class EvalExpressions implements Transform {
     }
 
     /**
-     * Adds the variable name and the retrieved value to the hashmap.
+     * Adds the variable name and the retrieved value to the hashmap in variableValues.
      *
      * @param toBeFound VariableAssignment to find
      */
