@@ -285,7 +285,7 @@ public class EvalExpressions implements Transform {
 //                    return;
 }
      */
-    
+
     private void evaluateExpression(ArrayList<ASTNode> children, ASTNode parent) {
         for(ASTNode child : children) {
             if(parent instanceof Declaration) {
@@ -359,6 +359,10 @@ public class EvalExpressions implements Transform {
                 return new PixelLiteral(result);
             }
         }
+        if (exLeft instanceof ScalarLiteral && exRight instanceof ScalarLiteral) {
+            int result = ((ScalarLiteral) exLeft).value * ((ScalarLiteral) exRight).value;
+            return new ScalarLiteral(result);
+        }
         return null;
     }
 
@@ -377,6 +381,10 @@ public class EvalExpressions implements Transform {
         if (exLeft instanceof PixelLiteral) {
             int result = ((PixelLiteral) exLeft).value + ((PixelLiteral) exRight).value;
             return new PixelLiteral(result);
+        }
+        if(exLeft instanceof ScalarLiteral) {
+            int result = ((ScalarLiteral) exLeft).value + ((ScalarLiteral) exRight).value;
+            return new ScalarLiteral(result);
         }
         // Scalar?
         return null;
@@ -398,7 +406,10 @@ public class EvalExpressions implements Transform {
             int result = ((PixelLiteral) exLeft).value - ((PixelLiteral) exRight).value;
             return new PixelLiteral(result);
         }
-        // Scalar?
+        if(exLeft instanceof ScalarLiteral) {
+            int result = ((ScalarLiteral) exLeft).value - ((ScalarLiteral) exRight).value;
+            return new ScalarLiteral(result);
+        }
         return null;
     }
 
