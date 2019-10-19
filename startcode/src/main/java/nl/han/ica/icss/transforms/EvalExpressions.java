@@ -194,7 +194,14 @@ public class EvalExpressions implements Transform {
             Expression expression = variableAssignment.expression;
 
             Literal literal = null;
-            if(expression instanceof Literal) {
+            if(expression instanceof Operation) {
+                literal = calculateOperation((Operation) expression);
+            } else if(expression instanceof VariableReference) {
+                VariableReference variableReference = (VariableReference) expression;
+                if(variableValues.getFirst().containsKey(variableReference.name)) {
+                    literal = variableValues.getFirst().get(variableReference.name);
+                }
+            } else if(expression instanceof Literal) {
                 literal = (Literal) expression;
             }
             variableValues.getFirst().put(name, literal);
