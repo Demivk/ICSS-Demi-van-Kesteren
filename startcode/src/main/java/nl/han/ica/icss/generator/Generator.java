@@ -9,8 +9,7 @@ import nl.han.ica.icss.ast.selectors.TagSelector;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
-// TODO javadoc
-// TODO varref/varass naar transformer?
+
 public class Generator {
 
     private String result = "";
@@ -25,6 +24,12 @@ public class Generator {
         return result + "}";
 	}
 
+    /**
+     * Makes the final result by calling
+     * generateSelectorResult and generateBodyResult
+     *
+     * @param node node to start generating the result
+     */
 	private void generateResult(ASTNode node) {
 	    if(node instanceof Selector) {
             if(result.endsWith(";\n")) {
@@ -32,32 +37,43 @@ public class Generator {
             }
 	        generateSelectorResult((Selector) node);
         }
-//	    if(node instanceof IfClause) {
-//            generateIfClauseResult(node);
-//        }
 	    if(node instanceof Declaration) {
 	        generateBodyResult(node);
         }
 	    node.getChildren().forEach(this::generateResult);
     }
 
-    private void generateSelectorResult(Selector node) {
-	    if(node instanceof ClassSelector) {
-	        result += ((ClassSelector) node).cls + " {";
-        } else if(node instanceof IdSelector) {
-	        result += ((IdSelector) node).id + " {";
-        } else if(node instanceof TagSelector) {
-	        result += ((TagSelector) node).tag + " {";
+    /**
+     * Checks the selector type of the node and adds it to the final result
+     * @param selector node to check the type of
+     */
+    private void generateSelectorResult(Selector selector) {
+	    if(selector instanceof ClassSelector) {
+	        result += ((ClassSelector) selector).cls + " {";
+        } else if(selector instanceof IdSelector) {
+	        result += ((IdSelector) selector).id + " {";
+        } else if(selector instanceof TagSelector) {
+	        result += ((TagSelector) selector).tag + " {";
         }
 	    result += "\n";
     }
 
+    /**
+     * Calls generateDeclarationResult if the node is a Declaration
+     *
+     * @param node node to check
+     */
     private void generateBodyResult(ASTNode node) {
 	    if(node instanceof Declaration) {
             generateDeclarationResult(node.getChildren());
         }
     }
 
+    /**
+     * Adds the declaration to the final result
+     *
+     * @param nodes list of nodes to check
+     */
     private void generateDeclarationResult(ArrayList<ASTNode> nodes) {
 	    for(ASTNode node : nodes) {
             if (node instanceof PropertyName) {
@@ -69,40 +85,15 @@ public class Generator {
             if(node instanceof VariableReference) {
                 generateVariableValueByName(node);
             }
-//            if(node instanceof Operation) {
-//                generateOperationResult(node);
-//            }
         }
         result += ";\n";
     }
 
-//    private void generateIfClauseResult(ASTNode node) {
-//	    if(node instanceof IfClause) {
-//	        result += "IFFF";
-//	        result += ((IfClause) node).conditionalExpression; // varref
-//	        generateVariableValueByName(node);
-//	        result += "\n";
-//	        // als conditie in if = true
-//            // zet dat als result anders niet
-//	        node.getChildren().forEach(this::generateIfClauseResult);
-//        }
-//    }
-
-//    private void generateOperationResult(ASTNode node) {
-//	    if(node instanceof Operation) {
-//	        if(node instanceof MultiplyOperation) {
-//	            result += "MULTIPLY\n";
-//            }
-//	        if(node instanceof AddOperation) {
-//                result += "ADD\n";
-//            }
-//	        if(node instanceof SubtractOperation) {
-//                result += "SUBTRACT\n";
-//            }
-//        }
-//	    node.getChildren().forEach(this::generateOperationResult);
-//    }
-
+    /**
+     * Adds the literal value to the final result
+     *
+     * @param node node to get the value from
+     */
     private void generateLiteralResult(ASTNode node) {
 	    if(node instanceof BoolLiteral) {
 	        result += ((BoolLiteral) node).value;
@@ -117,6 +108,11 @@ public class Generator {
         }
     }
 
+    /**
+     * Retrieves the value of a variable and calls generateLiteralResult
+     *
+     * @param node node to get the value from
+     */
     private void generateVariableValueByName(ASTNode node) {
 	    if(node instanceof VariableReference) {
             if (variables.getFirst().containsKey(((VariableReference) node).name)) {
@@ -125,12 +121,17 @@ public class Generator {
         }
     }
 
-    private void findAllVariables(ASTNode node) {
-        if (node instanceof VariableAssignment) {
-            String name = ((VariableAssignment) node).name.name;
-            Expression expression = ((VariableAssignment) node).expression;
+    /**
+     * Adds the variable name and expression to the hashmap in variables
+     *
+     * @param toBeFound node to find
+     */
+    private void findAllVariables(ASTNode toBeFound) {
+        if (toBeFound instanceof VariableAssignment) {
+            String name = ((VariableAssignment) toBeFound).name.name;
+            Expression expression = ((VariableAssignment) toBeFound).expression;
             variables.getFirst().put(name, expression);
         }
-        node.getChildren().forEach(this::findAllVariables);
+        toBeFound.getChildren().forEach(this::findAllVariables);
     }
 }
