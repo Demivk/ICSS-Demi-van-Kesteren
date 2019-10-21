@@ -1,5 +1,6 @@
 package nl.han.ica.icss.checker;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 
@@ -9,6 +10,7 @@ import nl.han.ica.icss.ast.operations.AddOperation;
 import nl.han.ica.icss.ast.operations.MultiplyOperation;
 import nl.han.ica.icss.ast.operations.SubtractOperation;
 import nl.han.ica.icss.ast.types.*;
+import nl.han.ica.icss.transforms.AllowedAttributes;
 
 public class Checker {
 
@@ -32,7 +34,7 @@ public class Checker {
         checkUndefinedVariables(node);      // works
 //            checkOperationsAreAllowed(node);    // does not work with variables (*) and multiple operands
         checkNoColorsInOperation(node);     // works
-//            checkDeclarationValuesValid(node);  // does not work with operations with variables (maybe CH02 will fix this?)
+            checkDeclarationValuesValid(node);  // does not work with operations with variables (maybe CH02 will fix this?)
         checkIfConditionIsBoolean(node);    // works
         checkNoBooleansInOperation(node);   // works
 
@@ -52,8 +54,8 @@ public class Checker {
     private void checkAllowedStyleAttributes(ASTNode toBeChecked) {
         if(toBeChecked.getChildren().size() != 1) {
             if(toBeChecked instanceof PropertyName) {
-                if(!((PropertyName) toBeChecked).name.equals("color") && !((PropertyName) toBeChecked).name.equals("background-color") &&
-                   !((PropertyName) toBeChecked).name.equals("width") && !((PropertyName) toBeChecked).name.equals("height")) {
+                if(!((PropertyName) toBeChecked).name.equals(AllowedAttributes.COLOR.attribute) && !((PropertyName) toBeChecked).name.equals(AllowedAttributes.BACKGROUNDCOLOR.attribute) &&
+                   !((PropertyName) toBeChecked).name.equals(AllowedAttributes.WIDTH.attribute) && !((PropertyName) toBeChecked).name.equals(AllowedAttributes.HEIGHT.attribute)) {
                     toBeChecked.setError(((PropertyName) toBeChecked).name + " is not an allowed style attribute.");
                 }
             }
@@ -178,7 +180,7 @@ public class Checker {
         if(toBeChecked.getChildren().size() != 1) {
             if(toBeChecked instanceof Declaration) {
                 // if expression operation
-                if(((Declaration) toBeChecked).property.name.equals("color") || ((Declaration) toBeChecked).property.name.equals("background-color")) {
+                if(((Declaration) toBeChecked).property.name.equals(AllowedAttributes.COLOR.attribute) || ((Declaration) toBeChecked).property.name.equals(AllowedAttributes.BACKGROUNDCOLOR.attribute)) {
                     if(((Declaration) toBeChecked).expression instanceof VariableReference) {
                         if(variableTypes.getFirst().containsKey(((VariableReference) ((Declaration) toBeChecked).expression).name)) {
                             if(variableTypes.getFirst().get(((VariableReference) ((Declaration) toBeChecked).expression).name) != ExpressionType.COLOR) {
@@ -189,7 +191,7 @@ public class Checker {
                         toBeChecked.setError("Color attribute must have a color value.");
                     }
                 }
-                if(((Declaration) toBeChecked).property.name.equals("width") || ((Declaration) toBeChecked).property.name.equals("height")) {
+                if(((Declaration) toBeChecked).property.name.equals(AllowedAttributes.WIDTH.attribute) || ((Declaration) toBeChecked).property.name.equals(AllowedAttributes.HEIGHT.attribute)) {
                     if(((Declaration) toBeChecked).expression instanceof VariableReference) {
                         if(variableTypes.getFirst().containsKey(((VariableReference) ((Declaration) toBeChecked).expression).name)) {
                             if(variableTypes.getFirst().get(((VariableReference) ((Declaration) toBeChecked).expression).name) != ExpressionType.PIXEL && variableTypes.getFirst().get(((VariableReference) ((Declaration) toBeChecked).expression).name) != ExpressionType.PERCENTAGE) {
