@@ -66,7 +66,6 @@ expression: expression MUL expression #multiplyOperation |
 ifClause: IF BOX_BRACKET_OPEN expression BOX_BRACKET_CLOSE OPEN_BRACE scope CLOSE_BRACE;
 
 // Selectors
-//selectors: selector | selectors COMMA selectors;
 selector: (tagSelector | classSelector | idSelector) (COMMA selector)*;
 tagSelector: LOWER_IDENT;
 classSelector: CLASS_IDENT;
