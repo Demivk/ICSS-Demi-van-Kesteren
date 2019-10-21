@@ -32,16 +32,15 @@ public class Checker {
     private void checkAST(ASTNode node) {
         checkAllowedStyleAttributes(node);  // works
         checkUndefinedVariables(node);      // works
-//            checkOperationsAreAllowed(node);    // does not work with variables (*) and multiple operands
+//            checkOperationsAreAllowed(node);    // does not work with multiple operands
         checkNoColorsInOperation(node);     // works
-            checkDeclarationValuesValid(node);  // does not work with operations with variables (maybe CH02 will fix this?)
+//            checkDeclarationValuesValid(node);  // does not work with operations
         checkIfConditionIsBoolean(node);    // works
         checkNoBooleansInOperation(node);   // works
 
         node.getChildren().forEach(this::checkAST);
     }
 
-    // TODO optimaliseren: lijst maken van allowed attributes?
     /**
      * BP04
      * Eis: Alleen de stijlattributen color,background-color, width en height zijn toegestaan.
@@ -83,7 +82,7 @@ public class Checker {
         }
     }
 
-    // TODO fix werkend met variabelen (lvl2 werkt niet met verschillende operands)
+    // TODO fix werkend met verschillende operands
     /**
      * CH02
      * Eis: "Controleer of de operanden van de operaties plus en min van gelijk type zijn en
@@ -126,7 +125,6 @@ public class Checker {
                 } else if(toBeChecked instanceof MultiplyOperation) {
                     // if varref
                     // else
-
                     if((resolveExpressionType(((MultiplyOperation) toBeChecked).lhs) != ExpressionType.SCALAR && resolveExpressionType(((MultiplyOperation) toBeChecked).rhs) != ExpressionType.SCALAR) ||
                        (resolveExpressionType(((MultiplyOperation) toBeChecked).lhs) == ExpressionType.SCALAR && resolveExpressionType(((MultiplyOperation) toBeChecked).rhs) == ExpressionType.SCALAR)) {
                         toBeChecked.setError("The multiply operation needs one scalar type.");
@@ -165,7 +163,7 @@ public class Checker {
         }
     }
 
-    // TODO fix werkend met variablen (lvl 2 werkt niet met optellen) + optimaliseren
+    // TODO fix werkend met operands
     /**
      * CH04
      * Eis: "Controleer of bij declaraties het type van de waarde klopt bij de stijleigenschap.
