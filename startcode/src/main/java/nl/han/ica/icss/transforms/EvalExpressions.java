@@ -188,6 +188,7 @@ public class EvalExpressions implements Transform {
      * @param toBeFound VariableAssignment to find
      */
     private void findAllVariables(ASTNode toBeFound) {
+        // binnen scope: maak nieuwe map op first en remove children van map?
         if (toBeFound instanceof VariableAssignment) {
             VariableAssignment variableAssignment = (VariableAssignment) toBeFound;
             String name = variableAssignment.name.name;
