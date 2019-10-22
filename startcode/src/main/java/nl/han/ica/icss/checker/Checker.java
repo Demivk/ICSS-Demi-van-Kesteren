@@ -120,7 +120,7 @@ public class Checker {
                         toBeChecked.setError("The operand types must be the same.");
                     }
                 } else if (toBeChecked instanceof MultiplyOperation) {
-                    if ((resolveExpressionType(((MultiplyOperation) toBeChecked).lhs) != ExpressionType.SCALAR && resolveExpressionType(((MultiplyOperation) toBeChecked).rhs) != ExpressionType.SCALAR) || // TODO SCALAR * SCALAR?
+                    if ((resolveExpressionType(((MultiplyOperation) toBeChecked).lhs) != ExpressionType.SCALAR && resolveExpressionType(((MultiplyOperation) toBeChecked).rhs) != ExpressionType.SCALAR) ||
                             (resolveExpressionType(((MultiplyOperation) toBeChecked).lhs) == ExpressionType.SCALAR && resolveExpressionType(((MultiplyOperation) toBeChecked).rhs) == ExpressionType.SCALAR)) {
                         toBeChecked.setError("The multiply operation needs one scalar type.");
                     }
