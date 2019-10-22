@@ -332,10 +332,14 @@ public class Checker {
         }
         if (operation instanceof AddOperation || operation instanceof SubtractOperation) {
             if (left == ExpressionType.PIXEL) {
-                return ExpressionType.PIXEL;
+                if(left == right) {
+                    return ExpressionType.PIXEL;
+                }
             }
             if (right == ExpressionType.PERCENTAGE) {
-                return ExpressionType.PERCENTAGE;
+                if(left == right) {
+                    return ExpressionType.PERCENTAGE;
+                }
             }
         }
         return ExpressionType.UNDEFINED;
