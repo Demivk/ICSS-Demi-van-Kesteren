@@ -13,18 +13,18 @@ import java.util.LinkedList;
 public class Generator {
 
     private StringBuilder stringBuilder;
-    private LinkedList<HashMap<String,Expression>> variables;
+    private LinkedList<HashMap<String, Expression>> variables;
 
-	public String generate(AST ast) {
+    public String generate(AST ast) {
         variables = new LinkedList<>();
         variables.add(new HashMap<>());
         stringBuilder = new StringBuilder();
 
         findAllVariables(ast.root);
-	    generateResult(ast.root);
+        generateResult(ast.root);
 
         return stringBuilder.toString() + "}";
-	}
+    }
 
     /**
      * Makes the final result by calling
@@ -32,32 +32,36 @@ public class Generator {
      *
      * @param node node to start generating the result
      */
-	private void generateResult(ASTNode node) {
-	    if(node instanceof Selector) {
-            if(stringBuilder.toString().endsWith(";\n")) {
+    private void generateResult(ASTNode node) {
+        if (node instanceof Selector) {
+            if (stringBuilder.toString().endsWith(";\n")) {
                 stringBuilder.append("}\n\n");
             }
-	        generateSelectorResult((Selector) node);
+            generateSelectorResult((Selector) node);
         }
-	    if(node instanceof Declaration) {
-	        generateBodyResult(node);
+        if (node instanceof Declaration) {
+            if (stringBuilder.toString().endsWith(" ")) {
+                stringBuilder.append("{\n");
+            }
+            generateBodyResult(node);
         }
-	    node.getChildren().forEach(this::generateResult);
+        node.getChildren().forEach(this::generateResult);
     }
 
     /**
      * Checks the selector type of the node and adds it to the final result
+     *
      * @param selector node to check the type of
      */
     private void generateSelectorResult(Selector selector) {
-	    if(selector instanceof ClassSelector) {
-	        stringBuilder.append(((ClassSelector) selector).cls).append(" {");
-        } else if(selector instanceof IdSelector) {
-	        stringBuilder.append(((IdSelector) selector).id).append(" {");
-        } else if(selector instanceof TagSelector) {
-	        stringBuilder.append(((TagSelector) selector).tag).append(" {");
+        if (selector instanceof ClassSelector) {
+            stringBuilder.append(((ClassSelector) selector).cls);
+        } else if (selector instanceof IdSelector) {
+            stringBuilder.append(((IdSelector) selector).id);
+        } else if (selector instanceof TagSelector) {
+            stringBuilder.append(((TagSelector) selector).tag);
         }
-	    stringBuilder.append("\n");
+        stringBuilder.append(" ");
     }
 
     /**
@@ -66,7 +70,7 @@ public class Generator {
      * @param node node to check
      */
     private void generateBodyResult(ASTNode node) {
-	    if(node instanceof Declaration) {
+        if (node instanceof Declaration) {
             generateDeclarationResult(node.getChildren());
         }
     }
@@ -77,14 +81,14 @@ public class Generator {
      * @param nodes list of nodes to check
      */
     private void generateDeclarationResult(ArrayList<ASTNode> nodes) {
-	    for(ASTNode node : nodes) {
+        for (ASTNode node : nodes) {
             if (node instanceof PropertyName) {
                 stringBuilder.append("\t").append(((PropertyName) node).name).append(": ");
             }
             if (node instanceof Expression) {
                 generateLiteralResult(node);
             }
-            if(node instanceof VariableReference) {
+            if (node instanceof VariableReference) {
                 generateVariableValueByName(node);
             }
         }
@@ -93,20 +97,18 @@ public class Generator {
 
     /**
      * Adds the literal value to the final result
+     * Because BoolLiteral and ScalarLiteral are not used
+     * in the final CSS file, they are not included
      *
      * @param node node to get the value from
      */
     private void generateLiteralResult(ASTNode node) {
-	    if(node instanceof BoolLiteral) {
-	        stringBuilder.append(((BoolLiteral) node).value);
-        } else if(node instanceof ColorLiteral) {
+        if (node instanceof ColorLiteral) {
             stringBuilder.append(((ColorLiteral) node).value);
-        } else if(node instanceof PercentageLiteral) {
-	        stringBuilder.append(((PercentageLiteral) node).value).append("%");
-        } else if(node instanceof PixelLiteral) {
-	        stringBuilder.append(((PixelLiteral) node).value).append("px");
-        } else if(node instanceof ScalarLiteral) {
-	        stringBuilder.append(((ScalarLiteral) node).value);
+        } else if (node instanceof PercentageLiteral) {
+            stringBuilder.append(((PercentageLiteral) node).value).append("%");
+        } else if (node instanceof PixelLiteral) {
+            stringBuilder.append(((PixelLiteral) node).value).append("px");
         }
     }
 
@@ -116,7 +118,7 @@ public class Generator {
      * @param node node to get the value from
      */
     private void generateVariableValueByName(ASTNode node) {
-	    if(node instanceof VariableReference) {
+        if (node instanceof VariableReference) {
             if (variables.getFirst().containsKey(((VariableReference) node).name)) {
                 generateLiteralResult(variables.getFirst().get(((VariableReference) node).name));
             }

@@ -36,7 +36,7 @@ PLUS: '+';
 MIN: '-';
 MUL: '*';
 ASSIGNMENT_OPERATOR: ':=';
-COMMA: ',';
+COMMA: ', ';
 
 //--- PARSER: ---
 // Stylesheet
@@ -47,7 +47,7 @@ variableAssignment: variableReference ASSIGNMENT_OPERATOR expression SEMICOLON;
 variableReference: CAPITAL_IDENT;
 
 // Stylerule
-stylerule: selector OPEN_BRACE scope CLOSE_BRACE; // selector+ ?
+stylerule: selector OPEN_BRACE scope CLOSE_BRACE;
 scope: body+;
 body: declaration | ifClause | variableAssignment;
 
@@ -66,7 +66,7 @@ expression: expression MUL expression #multiplyOperation |
 ifClause: IF BOX_BRACKET_OPEN expression BOX_BRACKET_CLOSE OPEN_BRACE scope CLOSE_BRACE;
 
 // Selectors
-selector: tagSelector | classSelector | idSelector;
+selector: (tagSelector | classSelector | idSelector) (COMMA selector)*;
 tagSelector: LOWER_IDENT;
 classSelector: CLASS_IDENT;
 idSelector: ID_IDENT;
