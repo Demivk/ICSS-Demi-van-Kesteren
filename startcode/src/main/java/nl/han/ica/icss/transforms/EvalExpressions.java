@@ -21,9 +21,8 @@ public class EvalExpressions implements Transform {
     @Override
     public void apply(AST ast) {
         variableValues = new LinkedList<>();
-        variableValues.add(new HashMap<>());
+        variableValues.addFirst(new HashMap<>());
 
-        findAllVariables(ast.root);
         evaluateExpression(ast.root.getChildren(), ast.root);
     }
 
@@ -36,7 +35,12 @@ public class EvalExpressions implements Transform {
      * @param parent node to evaluate
      */
     private void evaluateExpression(ArrayList<ASTNode> children, ASTNode parent) {
+        HashMap<String, Literal> hashMap = new HashMap<>();
+        variableValues.addFirst(hashMap);
         for(ASTNode child : children) {
+            if(child instanceof VariableAssignment) {
+                hashMap.put(((VariableAssignment) child).name.name, getLiteralFromExpression(((VariableAssignment) child).expression));
+            }
             if(parent instanceof Declaration) {
                 Declaration declaration = (Declaration) parent;
                 if(child instanceof Operation) {
@@ -44,13 +48,16 @@ public class EvalExpressions implements Transform {
                 }
                 if(child instanceof VariableReference) {
                     VariableReference variableReference = (VariableReference) child;
-                    if(variableValues.getFirst().containsKey(variableReference.name)) {
-                        ((Declaration) parent).expression = variableValues.getFirst().get(variableReference.name);
+                    for(HashMap<String, Literal> map : variableValues) {
+                        if(map.containsKey(variableReference.name)) {
+                            ((Declaration) parent).expression = map.get(variableReference.name);
+                        }
                     }
                 }
             }
             evaluateExpression(child.getChildren(), child);
         }
+        variableValues.removeFirst();
     }
 
     /**
@@ -65,8 +72,11 @@ public class EvalExpressions implements Transform {
      */
     private Literal calculateExpression(Expression expression) {
         if(expression instanceof VariableReference) {
-            if(variableValues.getFirst().containsKey(((VariableReference) expression).name)) {
-                return variableValues.getFirst().get(((VariableReference) expression).name);
+            VariableReference variableReference = (VariableReference) expression;
+            for(HashMap<String, Literal> map : variableValues) {
+                if(map.containsKey(variableReference.name)) {
+                    return map.get(variableReference.name);
+                }
             }
         }
         if(expression instanceof Operation) {
@@ -183,29 +193,24 @@ public class EvalExpressions implements Transform {
     }
 
     /**
-     * Adds the variable name and the retrieved value to the hashmap in variableValues.
-     *
-     * @param toBeFound VariableAssignment to find
+     * Returns the literal from the given expression
+     * @param expression given expression
+     * @return literal or null
      */
-    private void findAllVariables(ASTNode toBeFound) {
-        if (toBeFound instanceof VariableAssignment) {
-            VariableAssignment variableAssignment = (VariableAssignment) toBeFound;
-            String name = variableAssignment.name.name;
-            Expression expression = variableAssignment.expression;
-
-            Literal literal = null;
-            if(expression instanceof Operation) {
-                literal = calculateOperation((Operation) expression);
-            } else if(expression instanceof VariableReference) {
-                VariableReference variableReference = (VariableReference) expression;
-                if(variableValues.getFirst().containsKey(variableReference.name)) {
-                    literal = variableValues.getFirst().get(variableReference.name);
+    private Literal getLiteralFromExpression(Expression expression) {
+        Literal literal = null;
+        if(expression instanceof Operation) {
+            literal = calculateOperation((Operation) expression);
+        } else if(expression instanceof VariableReference) {
+            VariableReference variableReference = (VariableReference) expression;
+            for(HashMap<String, Literal> map : variableValues) {
+                if(map.containsKey(variableReference.name)) {
+                    literal = map.get(variableReference.name);
                 }
-            } else if(expression instanceof Literal) {
-                literal = (Literal) expression;
             }
-            variableValues.getFirst().put(name, literal);
+        } else if(expression instanceof Literal) {
+            literal = (Literal) expression;
         }
-        toBeFound.getChildren().forEach(this::findAllVariables);
+        return literal;
     }
 }
